@@ -1,13 +1,23 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Clock, Users, BookOpen } from "lucide-react";
+import { 
+  Wand2, 
+  BookOpen, 
+  Users, 
+  Clock, 
+  Target,
+  Lightbulb,
+  CheckCircle,
+  ArrowRight
+} from "lucide-react";
 
 export const CreateLessonPlanPage = () => {
   const [step, setStep] = useState(1);
@@ -16,254 +26,268 @@ export const CreateLessonPlanPage = () => {
     subject: "",
     grade: "",
     duration: "",
-    outline: "",
     objectives: "",
+    outline: "",
+    studentNeeds: "",
   });
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const steps = [
+    { number: 1, title: "Basic Information", icon: BookOpen },
+    { number: 2, title: "Learning Objectives", icon: Target },
+    { number: 3, title: "Content Outline", icon: Lightbulb },
+    { number: 4, title: "AI Enhancement", icon: Wand2 },
+  ];
+
+  const subjects = [
+    "Mathematics", "Science", "English", "History", "Geography", 
+    "Art", "Music", "Physical Education", "Computer Science", "Other"
+  ];
+
+  const grades = [
+    "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5",
+    "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10",
+    "Grade 11", "Grade 12"
+  ];
+
+  const durations = ["30 min", "45 min", "60 min", "90 min", "120 min"];
 
   const handleNext = () => {
-    if (step < 3) setStep(step + 1);
+    if (step < 4) setStep(step + 1);
   };
 
   const handlePrevious = () => {
     if (step > 1) setStep(step - 1);
   };
 
+  const progress = (step / 4) * 100;
+
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Sparkles className="h-8 w-8 text-blue-400" />
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">AI Lesson Plan Generator</h1>
-          <p className="text-gray-400">Create engaging lesson plans with AI assistance</p>
+    <div className="p-8 max-w-4xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+          Create Lesson Plan
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Let AI help you create engaging and effective lesson plans
+        </p>
+      </div>
+
+      {/* Progress */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <span className="text-sm font-medium">Step {step} of 4</span>
+          <span className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</span>
+        </div>
+        <Progress value={progress} className="h-2" />
+        
+        <div className="flex justify-between">
+          {steps.map((s) => (
+            <div key={s.number} className={`flex items-center gap-2 ${
+              step >= s.number ? 'text-primary' : 'text-muted-foreground'
+            }`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 ${
+                step >= s.number 
+                  ? 'bg-primary border-primary text-primary-foreground' 
+                  : 'border-border'
+              }`}>
+                {step > s.number ? (
+                  <CheckCircle className="h-4 w-4" />
+                ) : (
+                  <s.icon className="h-4 w-4" />
+                )}
+              </div>
+              <span className="text-xs font-medium hidden sm:block">{s.title}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Progress Steps */}
-      <div className="flex items-center gap-4 mb-8">
-        {[1, 2, 3].map((stepNumber) => (
-          <div key={stepNumber} className="flex items-center gap-2">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                step >= stepNumber
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-700 text-gray-400"
-              }`}
-            >
-              {stepNumber}
+      {/* Step Content */}
+      <Card className="p-8 bg-card border-border">
+        {step === 1 && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+              <BookOpen className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-semibold">Basic Information</h2>
             </div>
-            <span className={`text-sm ${step >= stepNumber ? "text-white" : "text-gray-400"}`}>
-              {stepNumber === 1 && "Basic Info"}
-              {stepNumber === 2 && "Outline & Objectives"}
-              {stepNumber === 3 && "AI Questions"}
-            </span>
-            {stepNumber < 3 && (
-              <div className={`w-8 h-0.5 ${step > stepNumber ? "bg-blue-600" : "bg-gray-700"}`} />
-            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="title">Lesson Title</Label>
+                <Input
+                  id="title"
+                  placeholder="e.g., Introduction to Photosynthesis"
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className="bg-secondary border-border"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Select value={formData.subject} onValueChange={(value) => setFormData({...formData, subject: value})}>
+                  <SelectTrigger className="bg-secondary border-border">
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects.map((subject) => (
+                      <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="grade">Grade Level</Label>
+                <Select value={formData.grade} onValueChange={(value) => setFormData({...formData, grade: value})}>
+                  <SelectTrigger className="bg-secondary border-border">
+                    <SelectValue placeholder="Select grade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {grades.map((grade) => (
+                      <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="duration">Duration</Label>
+                <Select value={formData.duration} onValueChange={(value) => setFormData({...formData, duration: value})}>
+                  <SelectTrigger className="bg-secondary border-border">
+                    <SelectValue placeholder="Select duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durations.map((duration) => (
+                      <SelectItem key={duration} value={duration}>{duration}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Form */}
-        <div className="lg:col-span-2">
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">
-                {step === 1 && "Step 1: Basic Information"}
-                {step === 2 && "Step 2: Lesson Outline & Objectives"}
-                {step === 3 && "Step 3: AI Enhancement Questions"}
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                {step === 1 && "Provide the fundamental details about your lesson"}
-                {step === 2 && "Define your lesson structure and learning goals"}
-                {step === 3 && "Answer AI questions to personalize your lesson plan"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {step === 1 && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="title" className="text-white">Lesson Title</Label>
-                      <Input
-                        id="title"
-                        value={formData.title}
-                        onChange={(e) => handleInputChange("title", e.target.value)}
-                        placeholder="e.g., Introduction to Fractions"
-                        className="bg-gray-700 border-gray-600 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="subject" className="text-white">Subject</Label>
-                      <Select onValueChange={(value) => handleInputChange("subject", value)}>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                          <SelectValue placeholder="Select subject" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-700 border-gray-600">
-                          <SelectItem value="mathematics">Mathematics</SelectItem>
-                          <SelectItem value="science">Science</SelectItem>
-                          <SelectItem value="history">History</SelectItem>
-                          <SelectItem value="english">English Language Arts</SelectItem>
-                          <SelectItem value="art">Art</SelectItem>
-                          <SelectItem value="music">Music</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="grade" className="text-white">Grade Level</Label>
-                      <Select onValueChange={(value) => handleInputChange("grade", value)}>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                          <SelectValue placeholder="Select grade" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-700 border-gray-600">
-                          <SelectItem value="k">Kindergarten</SelectItem>
-                          <SelectItem value="1">1st Grade</SelectItem>
-                          <SelectItem value="2">2nd Grade</SelectItem>
-                          <SelectItem value="3">3rd Grade</SelectItem>
-                          <SelectItem value="4">4th Grade</SelectItem>
-                          <SelectItem value="5">5th Grade</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="duration" className="text-white">Duration</Label>
-                      <Select onValueChange={(value) => handleInputChange("duration", value)}>
-                        <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
-                          <SelectValue placeholder="Select duration" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-gray-700 border-gray-600">
-                          <SelectItem value="30">30 minutes</SelectItem>
-                          <SelectItem value="45">45 minutes</SelectItem>
-                          <SelectItem value="60">60 minutes</SelectItem>
-                          <SelectItem value="90">90 minutes</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </>
-              )}
+        {step === 2 && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Target className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-semibold">Learning Objectives</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="objectives">What should students learn?</Label>
+                <Textarea
+                  id="objectives"
+                  placeholder="List the key learning objectives for this lesson..."
+                  value={formData.objectives}
+                  onChange={(e) => setFormData({...formData, objectives: e.target.value})}
+                  className="bg-secondary border-border min-h-32"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="studentNeeds">Special Student Considerations</Label>
+                <Textarea
+                  id="studentNeeds"
+                  placeholder="Any specific student needs, learning disabilities, or accommodations to consider..."
+                  value={formData.studentNeeds}
+                  onChange={(e) => setFormData({...formData, studentNeeds: e.target.value})}
+                  className="bg-secondary border-border min-h-24"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
-              {step === 2 && (
-                <>
+        {step === 3 && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Lightbulb className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-semibold">Content Outline</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="outline">Lesson Content Outline</Label>
+                <Textarea
+                  id="outline"
+                  placeholder="Provide a basic outline of the lesson content, activities, and flow..."
+                  value={formData.outline}
+                  onChange={(e) => setFormData({...formData, outline: e.target.value})}
+                  className="bg-secondary border-border min-h-48"
+                />
+              </div>
+              
+              <div className="bg-secondary/50 p-4 rounded-lg">
+                <h4 className="font-medium mb-2">💡 Tips for a great outline:</h4>
+                <ul className="text-sm text-muted-foreground space-y-1">
+                  <li>• Include introduction, main activities, and conclusion</li>
+                  <li>• Mention any materials or resources needed</li>
+                  <li>• Consider different learning styles and engagement methods</li>
+                  <li>• Include assessment or evaluation methods</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Wand2 className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-semibold">AI Enhancement</h2>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
+                <h3 className="font-semibold text-lg mb-4">Ready to Generate Your Lesson Plan</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <div className="space-y-2">
-                    <Label htmlFor="outline" className="text-white">Lesson Outline</Label>
-                    <Textarea
-                      id="outline"
-                      value={formData.outline}
-                      onChange={(e) => handleInputChange("outline", e.target.value)}
-                      placeholder="Provide a brief outline of your lesson structure..."
-                      className="bg-gray-700 border-gray-600 text-white min-h-32"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="objectives" className="text-white">Learning Objectives</Label>
-                    <Textarea
-                      id="objectives"
-                      value={formData.objectives}
-                      onChange={(e) => handleInputChange("objectives", e.target.value)}
-                      placeholder="What should students learn or be able to do by the end of this lesson?"
-                      className="bg-gray-700 border-gray-600 text-white min-h-32"
-                    />
-                  </div>
-                </>
-              )}
-
-              {step === 3 && (
-                <div className="space-y-6">
-                  <div className="text-center p-6 bg-gray-700 rounded-lg">
-                    <Sparkles className="h-12 w-12 text-blue-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-white mb-2">AI Enhancement in Progress</h3>
-                    <p className="text-gray-400">
-                      Our AI is analyzing your lesson plan and will ask targeted questions to create
-                      the most effective teaching experience for your students.
-                    </p>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="p-4 bg-blue-600/20 border border-blue-600/30 rounded-lg">
-                      <h4 className="text-white font-medium mb-2">Sample AI Question:</h4>
-                      <p className="text-gray-300 mb-3">
-                        "Based on your math lesson about fractions, would you like me to include
-                        visual aids like pie charts or fraction bars to help students understand the concept better?"
-                      </p>
-                      <div className="flex gap-2">
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">Yes, include visual aids</Button>
-                        <Button size="sm" variant="outline" className="border-gray-600 text-gray-300">No, keep it simple</Button>
-                      </div>
-                    </div>
+                    <Badge variant="secondary" className="bg-secondary">
+                      <BookOpen className="h-3 w-3 mr-1" />
+                      {formData.subject || "Subject"} - {formData.grade || "Grade"}
+                    </Badge>
+                    <Badge variant="secondary" className="bg-secondary">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {formData.duration || "Duration"}
+                    </Badge>
                   </div>
                 </div>
-              )}
-
-              <div className="flex justify-between pt-6">
-                <Button
-                  variant="outline"
-                  onClick={handlePrevious}
-                  disabled={step === 1}
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                >
-                  Previous
-                </Button>
-                <Button
-                  onClick={handleNext}
-                  disabled={step === 3}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  {step === 3 ? "Generate Plan" : "Next"}
+                <p className="text-sm text-muted-foreground mb-6">
+                  Our AI will analyze your input and create a comprehensive lesson plan with detailed activities, 
+                  assessment methods, and personalized recommendations based on your students' needs.
+                </p>
+                <Button className="w-full bg-primary hover:bg-primary/90">
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Generate Lesson Plan with AI
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
+        )}
 
-        {/* Sidebar */}
-        <div className="space-y-4">
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Progress</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${formData.title ? "bg-green-400" : "bg-gray-600"}`} />
-                <span className="text-sm text-gray-300">Basic Information</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${formData.outline ? "bg-green-400" : "bg-gray-600"}`} />
-                <span className="text-sm text-gray-300">Lesson Outline</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-gray-600" />
-                <span className="text-sm text-gray-300">AI Enhancement</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Tips</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm">
-              <div className="flex gap-2">
-                <Clock className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                <p className="text-gray-300">AI generation typically takes 2-3 minutes</p>
-              </div>
-              <div className="flex gap-2">
-                <Users className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
-                <p className="text-gray-300">Include student data for personalized suggestions</p>
-              </div>
-              <div className="flex gap-2">
-                <BookOpen className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
-                <p className="text-gray-300">Detailed outlines produce better results</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Navigation */}
+        <div className="flex justify-between mt-8 pt-6 border-t border-border">
+          <Button 
+            variant="outline" 
+            onClick={handlePrevious}
+            disabled={step === 1}
+            className="border-border"
+          >
+            Previous
+          </Button>
+          <Button 
+            onClick={handleNext}
+            disabled={step === 4}
+            className="bg-primary hover:bg-primary/90"
+          >
+            Next
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

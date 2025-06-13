@@ -1,263 +1,281 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Monitor, Play, Pause, RotateCcw, MessageSquare, AlertTriangle, CheckCircle } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
+import { 
+  Monitor, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Settings, 
+  Users, 
+  MessageCircle,
+  Brain,
+  AlertTriangle,
+  CheckCircle,
+  Clock
+} from "lucide-react";
 
 export const VirtualClassroomPage = () => {
-  const [isSessionActive, setIsSessionActive] = useState(false);
-  const [sessionTime, setSessionTime] = useState(0);
-  const [currentMessage, setCurrentMessage] = useState("");
-
-  const mockLessonPlan = {
-    title: "Introduction to Fractions",
-    subject: "Mathematics",
-    grade: "4th Grade",
-    duration: "45 minutes"
-  };
-
-  const mockIssues = [
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationProgress, setSimulationProgress] = useState(0);
+  
+  const availablePlans = [
     {
-      type: "warning",
-      message: "Student 'Alex' might struggle with visual fraction representations",
-      timestamp: "03:45",
-      severity: "Medium"
+      id: 1,
+      title: "Introduction to Algebra",
+      subject: "Mathematics",
+      grade: "Grade 8",
+      duration: "45 min",
+      status: "Ready"
     },
     {
-      type: "suggestion",
-      message: "Consider slowing down during the pie chart explanation",
-      timestamp: "07:12",
-      severity: "Low"
-    },
-    {
-      type: "success",
-      message: "Great engagement during hands-on activity!",
-      timestamp: "12:30",
-      severity: "Positive"
+      id: 2,
+      title: "World War II History", 
+      subject: "History",
+      grade: "Grade 10", 
+      duration: "60 min",
+      status: "Draft"
     }
   ];
 
-  const toggleSession = () => {
-    setIsSessionActive(!isSessionActive);
+  const virtualStudents = [
+    { name: "Alex Chen", personality: "Analytical", engagement: "High", difficulty: "Advanced" },
+    { name: "Emma Rodriguez", personality: "Creative", engagement: "Medium", difficulty: "Grade Level" },
+    { name: "Marcus Johnson", personality: "Kinesthetic", engagement: "Low", difficulty: "Below Grade" },
+    { name: "Sofia Patel", personality: "Social", engagement: "High", difficulty: "Grade Level" },
+    { name: "Jamie Williams", personality: "Quiet", engagement: "Medium", difficulty: "Advanced" }
+  ];
+
+  const insights = [
+    {
+      type: "warning",
+      icon: AlertTriangle,
+      message: "Marcus may struggle with abstract algebra concepts - consider concrete examples",
+      timing: "5 minutes in"
+    },
+    {
+      type: "success", 
+      icon: CheckCircle,
+      message: "Alex and Sofia are showing strong engagement with the current activity",
+      timing: "12 minutes in"
+    },
+    {
+      type: "suggestion",
+      icon: Brain,
+      message: "Emma might benefit from visual representations - try adding diagrams",
+      timing: "18 minutes in"
+    }
+  ];
+
+  const startSimulation = () => {
+    setIsSimulating(true);
+    // Simulate progress
+    const interval = setInterval(() => {
+      setSimulationProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setIsSimulating(false);
+          return 100;
+        }
+        return prev + 2;
+      });
+    }, 100);
   };
 
-  const resetSession = () => {
-    setIsSessionActive(false);
-    setSessionTime(0);
+  const getEngagementColor = (engagement: string) => {
+    switch (engagement) {
+      case 'High': return 'text-green-400';
+      case 'Medium': return 'text-yellow-400';
+      case 'Low': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const getInsightColor = (type: string) => {
+    switch (type) {
+      case 'warning': return 'border-yellow-500/30 bg-yellow-500/10';
+      case 'success': return 'border-green-500/30 bg-green-500/10';
+      case 'suggestion': return 'border-blue-500/30 bg-blue-500/10';
+      default: return 'border-border bg-secondary';
+    }
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Monitor className="h-8 w-8 text-purple-400" />
-        <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Virtual Classroom</h1>
-          <p className="text-gray-400">Test and refine your lesson plans in a simulated environment</p>
-        </div>
+    <div className="p-8 space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+          Virtual Classroom
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Test your lesson plans with AI-powered student simulations
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Simulation Area */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Current Lesson Plan */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-white">{mockLessonPlan.title}</CardTitle>
-                  <CardDescription className="text-gray-400">
-                    {mockLessonPlan.subject} • {mockLessonPlan.grade} • {mockLessonPlan.duration}
-                  </CardDescription>
+        <div className="lg:col-span-2 space-y-6">
+          {/* Lesson Plan Selection */}
+          <Card className="p-6 bg-card border-border">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-primary" />
+              Select Lesson Plan
+            </h3>
+            <div className="space-y-3">
+              {availablePlans.map((plan) => (
+                <div key={plan.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary border border-border hover:border-primary/50 transition-colors cursor-pointer">
+                  <div>
+                    <h4 className="font-medium text-foreground">{plan.title}</h4>
+                    <p className="text-sm text-muted-foreground">
+                      {plan.subject} • {plan.grade} • {plan.duration}
+                    </p>
+                  </div>
+                  <Badge className={plan.status === 'Ready' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}>
+                    {plan.status}
+                  </Badge>
                 </div>
-                <Badge variant={isSessionActive ? "default" : "secondary"}>
-                  {isSessionActive ? "Active" : "Ready"}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <Button
-                  onClick={toggleSession}
-                  className={`${
-                    isSessionActive
-                      ? "bg-red-600 hover:bg-red-700"
-                      : "bg-green-600 hover:bg-green-700"
-                  } text-white`}
-                >
-                  {isSessionActive ? (
-                    <>
-                      <Pause className="h-4 w-4 mr-2" />
-                      Pause Session
-                    </>
-                  ) : (
-                    <>
-                      <Play className="h-4 w-4 mr-2" />
-                      Start Session
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={resetSession}
-                  variant="outline"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-700"
-                >
-                  <RotateCcw className="h-4 w-4 mr-2" />
-                  Reset
-                </Button>
-                <div className="flex items-center gap-2 ml-auto">
-                  <span className="text-sm text-gray-400">Session Time:</span>
-                  <span className="text-lg font-mono text-white">{formatTime(sessionTime)}</span>
-                </div>
-              </div>
-            </CardContent>
+              ))}
+            </div>
           </Card>
 
-          {/* AI Student Interaction */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <MessageSquare className="h-5 w-5 text-blue-400" />
-                AI Student Interaction
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                {isSessionActive 
-                  ? "AI students are responding to your lesson" 
-                  : "Start a session to begin interacting with AI students"
-                }
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isSessionActive ? (
-                <div className="space-y-4">
-                  <div className="bg-gray-700 p-4 rounded-lg">
+          {/* Simulation Controls */}
+          <Card className="p-6 bg-card border-border">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Play className="h-5 w-5 text-primary" />
+              Simulation Controls
+            </h3>
+            
+            {!isSimulating && simulationProgress === 0 && (
+              <div className="text-center py-8">
+                <Monitor className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <h4 className="text-lg font-medium mb-2">Ready to Start Virtual Class</h4>
+                <p className="text-muted-foreground mb-6">
+                  Select a lesson plan above and click start to begin the simulation
+                </p>
+                <Button onClick={startSimulation} className="bg-primary hover:bg-primary/90">
+                  <Play className="h-4 w-4 mr-2" />
+                  Start Simulation
+                </Button>
+              </div>
+            )}
+
+            {isSimulating && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Simulation Progress</span>
+                  <span className="text-sm text-muted-foreground">{simulationProgress}% Complete</span>
+                </div>
+                <Progress value={simulationProgress} className="h-2" />
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" className="border-border">
+                    <Pause className="h-4 w-4 mr-2" />
+                    Pause
+                  </Button>
+                  <Button size="sm" variant="outline" className="border-border">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Restart
+                  </Button>
+                  <Button size="sm" variant="outline" className="border-border">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {!isSimulating && simulationProgress === 100 && (
+              <div className="text-center py-8">
+                <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
+                <h4 className="text-lg font-medium mb-2">Simulation Complete!</h4>
+                <p className="text-muted-foreground mb-6">
+                  Review the insights and feedback below to improve your lesson plan
+                </p>
+                <div className="flex gap-2 justify-center">
+                  <Button onClick={() => {setSimulationProgress(0)}} variant="outline" className="border-border">
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Run Again
+                  </Button>
+                  <Button className="bg-primary hover:bg-primary/90">
+                    Save Results
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+
+          {/* Real-time Insights */}
+          {(isSimulating || simulationProgress === 100) && (
+            <Card className="p-6 bg-card border-border">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Brain className="h-5 w-5 text-primary" />
+                AI Insights
+              </h3>
+              <div className="space-y-3">
+                {insights.map((insight, index) => (
+                  <div key={index} className={`p-4 rounded-lg border ${getInsightColor(insight.type)}`}>
                     <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-medium">
-                        AI
-                      </div>
+                      <insight.icon className="h-5 w-5 mt-0.5" />
                       <div className="flex-1">
-                        <p className="text-white text-sm mb-1">Student Emma</p>
-                        <p className="text-gray-300">"I'm confused about how 1/2 and 2/4 can be the same. Can you show me again?"</p>
+                        <p className="text-sm font-medium">{insight.message}</p>
+                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {insight.timing}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <Textarea
-                      value={currentMessage}
-                      onChange={(e) => setCurrentMessage(e.target.value)}
-                      placeholder="Type your response to the student..."
-                      className="bg-gray-700 border-gray-600 text-white"
-                    />
-                    <Button className="mt-2 bg-blue-600 hover:bg-blue-700 text-white">
-                      Send Response
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  Start a session to begin interacting with AI students
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                ))}
+              </div>
+            </Card>
+          )}
         </div>
 
-        {/* Sidebar - Issues and Feedback */}
-        <div className="space-y-4">
-          {/* Real-time Issues */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-yellow-400" />
-                Real-time Feedback
-              </CardTitle>
-              <CardDescription className="text-gray-400">
-                AI-detected potential issues and suggestions
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {mockIssues.map((issue, index) => (
-                  <div key={index} className="p-3 bg-gray-700 rounded-lg">
-                    <div className="flex items-start gap-2">
-                      {issue.type === "warning" && <AlertTriangle className="h-4 w-4 text-yellow-400 mt-0.5" />}
-                      {issue.type === "suggestion" && <MessageSquare className="h-4 w-4 text-blue-400 mt-0.5" />}
-                      {issue.type === "success" && <CheckCircle className="h-4 w-4 text-green-400 mt-0.5" />}
-                      <div className="flex-1">
-                        <p className="text-sm text-white">{issue.message}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-gray-500">{issue.timestamp}</span>
-                          <Badge 
-                            variant="outline" 
-                            className={`text-xs ${
-                              issue.severity === "Medium" ? "border-yellow-600 text-yellow-400" :
-                              issue.severity === "Low" ? "border-blue-600 text-blue-400" :
-                              "border-green-600 text-green-400"
-                            }`}
-                          >
-                            {issue.severity}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
+        {/* Sidebar - Virtual Students */}
+        <div className="space-y-6">
+          <Card className="p-6 bg-card border-border">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              Virtual Students
+            </h3>
+            <div className="space-y-4">
+              {virtualStudents.map((student, index) => (
+                <div key={index} className="p-3 rounded-lg bg-secondary border border-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium text-sm">{student.name}</span>
+                    <span className={`text-xs font-medium ${getEngagementColor(student.engagement)}`}>
+                      {student.engagement}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </CardContent>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div>Type: {student.personality}</div>
+                    <div>Level: {student.difficulty}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </Card>
 
-          {/* Session Stats */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Session Statistics</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Student Questions:</span>
-                  <span className="text-white">3</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Engagement Level:</span>
-                  <span className="text-green-400">High</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Potential Issues:</span>
-                  <span className="text-yellow-400">2</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Completion Rate:</span>
-                  <span className="text-white">67%</span>
-                </div>
+          <Card className="p-6 bg-card border-border">
+            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-primary" />
+              Live Feedback
+            </h3>
+            <div className="space-y-3 text-sm">
+              <div className="p-3 rounded-lg bg-secondary">
+                <p className="font-medium">Alex:</p>
+                <p className="text-muted-foreground">"I understand the equation, but can we see more examples?"</p>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Virtual Students */}
-          <Card className="bg-gray-800 border-gray-700">
-            <CardHeader>
-              <CardTitle className="text-white">Virtual Students</CardTitle>
-              <CardDescription className="text-gray-400">
-                Based on your student data
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {["Emma", "Alex", "Sarah", "Michael"].map((name) => (
-                  <div key={name} className="flex items-center justify-between p-2 bg-gray-700 rounded">
-                    <span className="text-white text-sm">{name}</span>
-                    <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                  </div>
-                ))}
+              <div className="p-3 rounded-lg bg-secondary">
+                <p className="font-medium">Emma:</p>
+                <p className="text-muted-foreground">"This is confusing. Can you explain it differently?"</p>
               </div>
-            </CardContent>
+              <div className="p-3 rounded-lg bg-secondary">
+                <p className="font-medium">Marcus:</p>
+                <p className="text-muted-foreground">"I'm lost. Can we slow down?"</p>
+              </div>
+            </div>
           </Card>
         </div>
       </div>

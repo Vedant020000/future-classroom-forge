@@ -1,129 +1,128 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Users, Monitor, PlusCircle } from "lucide-react";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { BookOpen, Users, Monitor, TrendingUp, Clock, Star } from "lucide-react";
 
 export const DashboardPage = () => {
+  const stats = [
+    {
+      title: "Lesson Plans Created",
+      value: "24",
+      icon: BookOpen,
+      change: "+12% from last month",
+      trend: "up"
+    },
+    {
+      title: "Students Managed",
+      value: "156",
+      icon: Users,
+      change: "+3 new this week",
+      trend: "up"
+    },
+    {
+      title: "Virtual Classes",
+      value: "18",
+      icon: Monitor,
+      change: "6 completed today",
+      trend: "neutral"
+    },
+    {
+      title: "Success Rate",
+      value: "94%",
+      icon: TrendingUp,
+      change: "+2% improvement",
+      trend: "up"
+    }
+  ];
+
+  const recentPlans = [
+    { title: "Introduction to Algebra", subject: "Mathematics", created: "2 days ago", status: "Active" },
+    { title: "World War II History", subject: "History", created: "5 days ago", status: "Testing" },
+    { title: "Chemical Reactions", subject: "Science", created: "1 week ago", status: "Completed" },
+  ];
+
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-        <p className="text-gray-400">Welcome back! Here's your teaching overview.</p>
+        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+          Welcome back, Teacher
+        </h1>
+        <p className="text-muted-foreground mt-2">
+          Here's what's happening in your classroom today
+        </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
-              Lesson Plans
-            </CardTitle>
-            <BookOpen className="h-4 w-4 text-blue-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">12</div>
-            <p className="text-xs text-gray-500">+2 from last week</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
-              Students
-            </CardTitle>
-            <Users className="h-4 w-4 text-green-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">28</div>
-            <p className="text-xs text-gray-500">Across 2 classes</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
-              Virtual Sessions
-            </CardTitle>
-            <Monitor className="h-4 w-4 text-purple-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">5</div>
-            <p className="text-xs text-gray-500">This week</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">
-              Upcoming Classes
-            </CardTitle>
-            <PlusCircle className="h-4 w-4 text-orange-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-white">3</div>
-            <p className="text-xs text-gray-500">Next 24 hours</p>
-          </CardContent>
-        </Card>
+        {stats.map((stat) => (
+          <Card key={stat.title} className="p-6 bg-card border-border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
+                <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-xs text-primary mt-1">{stat.change}</p>
+              </div>
+              <stat.icon className="h-8 w-8 text-primary" />
+            </div>
+          </Card>
+        ))}
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Quick Actions</CardTitle>
-            <CardDescription className="text-gray-400">
-              Jump into your most common tasks
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Link to="/create-lesson-plan">
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                Create New Lesson Plan
-              </Button>
-            </Link>
-            <Link to="/virtual-classroom">
-              <Button variant="outline" className="w-full border-gray-600 text-gray-300 hover:bg-gray-700">
-                <Monitor className="h-4 w-4 mr-2" />
-                Enter Virtual Classroom
-              </Button>
-            </Link>
-          </CardContent>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Recent Activity */}
+        <Card className="p-6 bg-card border-border">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Clock className="h-5 w-5 text-primary" />
+            Recent Lesson Plans
+          </h3>
+          <div className="space-y-4">
+            {recentPlans.map((plan, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                <div>
+                  <p className="font-medium text-foreground">{plan.title}</p>
+                  <p className="text-sm text-muted-foreground">{plan.subject} • {plan.created}</p>
+                </div>
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  plan.status === 'Active' ? 'bg-green-500/20 text-green-400' :
+                  plan.status === 'Testing' ? 'bg-yellow-500/20 text-yellow-400' :
+                  'bg-blue-500/20 text-blue-400'
+                }`}>
+                  {plan.status}
+                </span>
+              </div>
+            ))}
+          </div>
         </Card>
 
-        <Card className="bg-gray-800 border-gray-700">
-          <CardHeader>
-            <CardTitle className="text-white">Recent Activity</CardTitle>
-            <CardDescription className="text-gray-400">
-              Your latest classroom activities
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-white">Created "Math Fractions" lesson plan</p>
-                  <p className="text-xs text-gray-500">2 hours ago</p>
-                </div>
+        {/* Progress Overview */}
+        <Card className="p-6 bg-card border-border">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Star className="h-5 w-5 text-primary" />
+            This Week's Progress
+          </h3>
+          <div className="space-y-6">
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span>Lesson Plans Completed</span>
+                <span>7/10</span>
               </div>
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-white">Updated student roster</p>
-                  <p className="text-xs text-gray-500">Yesterday</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
-                <div className="flex-1">
-                  <p className="text-sm text-white">Completed virtual classroom session</p>
-                  <p className="text-xs text-gray-500">2 days ago</p>
-                </div>
-              </div>
+              <Progress value={70} className="h-2" />
             </div>
-          </CardContent>
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span>Virtual Classes Tested</span>
+                <span>5/8</span>
+              </div>
+              <Progress value={62} className="h-2" />
+            </div>
+            <div>
+              <div className="flex justify-between text-sm mb-2">
+                <span>Student Data Updated</span>
+                <span>12/15</span>
+              </div>
+              <Progress value={80} className="h-2" />
+            </div>
+          </div>
         </Card>
       </div>
     </div>

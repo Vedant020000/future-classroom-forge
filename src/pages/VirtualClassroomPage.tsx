@@ -1,5 +1,8 @@
 
 import { useState } from "react";
+import { VirtualClassroomLayout } from "@/components/layout/VirtualClassroomLayout";
+import { LoadingScreen } from "@/components/LoadingScreen";
+import { LessonPlanSelector } from "@/components/virtual-classroom/LessonPlanSelector";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,28 +21,24 @@ import {
   Clock
 } from "lucide-react";
 
+interface LessonPlan {
+  id: number;
+  title: string;
+  subject: string;
+  grade: string;
+  duration: string;
+  students: number;
+  created: string;
+  status: string;
+  description: string;
+}
+
+type SimulationState = 'selecting' | 'loading' | 'running' | 'completed';
+
 export const VirtualClassroomPage = () => {
-  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationState, setSimulationState] = useState<SimulationState>('selecting');
+  const [selectedPlan, setSelectedPlan] = useState<LessonPlan | null>(null);
   const [simulationProgress, setSimulationProgress] = useState(0);
-  
-  const availablePlans = [
-    {
-      id: 1,
-      title: "Introduction to Algebra",
-      subject: "Mathematics",
-      grade: "Grade 8",
-      duration: "45 min",
-      status: "Ready"
-    },
-    {
-      id: 2,
-      title: "World War II History", 
-      subject: "History",
-      grade: "Grade 10", 
-      duration: "60 min",
-      status: "Draft"
-    }
-  ];
 
   const virtualStudents = [
     { name: "Alex Chen", personality: "Analytical", engagement: "High", difficulty: "Advanced" },
@@ -53,7 +52,7 @@ export const VirtualClassroomPage = () => {
     {
       type: "warning",
       icon: AlertTriangle,
-      message: "Marcus may struggle with abstract algebra concepts - consider concrete examples",
+      message: "Marcus may struggle with abstract concepts - consider concrete examples",
       timing: "5 minutes in"
     },
     {
@@ -70,19 +69,51 @@ export const VirtualClassroomPage = () => {
     }
   ];
 
+  const handleSelectPlan = (plan: LessonPlan) => {
+    setSelectedPlan(plan);
+    setSimulationState('loading');
+    
+    // Simulate loading
+    setTimeout(() => {
+      setSimulationState('running');
+      startSimulation();
+    }, 3000);
+  };
+
+  const handleUploadPlan = (file: File) => {
+    console.log('Uploading file:', file.name);
+    // Handle file upload logic here
+    const mockPlan: LessonPlan = {
+      id: 999,
+      title: file.name.replace(/\.[^/.]+$/, ""),
+      subject: "Uploaded",
+      grade: "Custom",
+      duration: "60 min",
+      students: 30,
+      created: new Date().toISOString().split('T')[0],
+      status: "Ready",
+      description: "Uploaded lesson plan"
+    };
+    handleSelectPlan(mockPlan);
+  };
+
   const startSimulation = () => {
-    setIsSimulating(true);
-    // Simulate progress
     const interval = setInterval(() => {
       setSimulationProgress(prev => {
         if (prev >= 100) {
           clearInterval(interval);
-          setIsSimulating(false);
+          setSimulationState('completed');
           return 100;
         }
         return prev + 2;
       });
     }, 100);
+  };
+
+  const resetSimulation = () => {
+    setSimulationProgress(0);
+    setSimulationState('selecting');
+    setSelectedPlan(null);
   };
 
   const getEngagementColor = (engagement: string) => {
@@ -99,186 +130,166 @@ export const VirtualClassroomPage = () => {
       case 'warning': return 'border-yellow-500/30 bg-yellow-500/10';
       case 'success': return 'border-green-500/30 bg-green-500/10';
       case 'suggestion': return 'border-blue-500/30 bg-blue-500/10';
-      default: return 'border-border bg-secondary';
+      default: return 'border-gray-600 bg-gray-900';
     }
   };
 
+  if (simulationState === 'loading') {
+    return <LoadingScreen message={`Loading ${selectedPlan?.title}...`} />;
+  }
+
+  if (simulationState === 'selecting') {
+    return (
+      <VirtualClassroomLayout>
+        <LessonPlanSelector 
+          onSelectPlan={handleSelectPlan}
+          onUploadPlan={handleUploadPlan}
+        />
+      </VirtualClassroomLayout>
+    );
+  }
+
   return (
-    <div className="p-8 space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-          Virtual Classroom
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Test your lesson plans with AI-powered student simulations
-        </p>
-      </div>
+    <VirtualClassroomLayout>
+      <div className="p-8 space-y-8 pt-20">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+            Virtual Classroom - {selectedPlan?.title}
+          </h1>
+          <p className="text-gray-400 mt-2">
+            {selectedPlan?.subject} • {selectedPlan?.grade} • {selectedPlan?.duration}
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Simulation Area */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Lesson Plan Selection */}
-          <Card className="p-6 bg-card border-border">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Monitor className="h-5 w-5 text-primary" />
-              Select Lesson Plan
-            </h3>
-            <div className="space-y-3">
-              {availablePlans.map((plan) => (
-                <div key={plan.id} className="flex items-center justify-between p-4 rounded-lg bg-secondary border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                  <div>
-                    <h4 className="font-medium text-foreground">{plan.title}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {plan.subject} • {plan.grade} • {plan.duration}
-                    </p>
-                  </div>
-                  <Badge className={plan.status === 'Ready' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}>
-                    {plan.status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Simulation Controls */}
-          <Card className="p-6 bg-card border-border">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Play className="h-5 w-5 text-primary" />
-              Simulation Controls
-            </h3>
-            
-            {!isSimulating && simulationProgress === 0 && (
-              <div className="text-center py-8">
-                <Monitor className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h4 className="text-lg font-medium mb-2">Ready to Start Virtual Class</h4>
-                <p className="text-muted-foreground mb-6">
-                  Select a lesson plan above and click start to begin the simulation
-                </p>
-                <Button onClick={startSimulation} className="bg-primary hover:bg-primary/90">
-                  <Play className="h-4 w-4 mr-2" />
-                  Start Simulation
-                </Button>
-              </div>
-            )}
-
-            {isSimulating && (
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Simulation Progress</span>
-                  <span className="text-sm text-muted-foreground">{simulationProgress}% Complete</span>
-                </div>
-                <Progress value={simulationProgress} className="h-2" />
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" className="border-border">
-                    <Pause className="h-4 w-4 mr-2" />
-                    Pause
-                  </Button>
-                  <Button size="sm" variant="outline" className="border-border">
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Restart
-                  </Button>
-                  <Button size="sm" variant="outline" className="border-border">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {!isSimulating && simulationProgress === 100 && (
-              <div className="text-center py-8">
-                <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
-                <h4 className="text-lg font-medium mb-2">Simulation Complete!</h4>
-                <p className="text-muted-foreground mb-6">
-                  Review the insights and feedback below to improve your lesson plan
-                </p>
-                <div className="flex gap-2 justify-center">
-                  <Button onClick={() => {setSimulationProgress(0)}} variant="outline" className="border-border">
-                    <RotateCcw className="h-4 w-4 mr-2" />
-                    Run Again
-                  </Button>
-                  <Button className="bg-primary hover:bg-primary/90">
-                    Save Results
-                  </Button>
-                </div>
-              </div>
-            )}
-          </Card>
-
-          {/* Real-time Insights */}
-          {(isSimulating || simulationProgress === 100) && (
-            <Card className="p-6 bg-card border-border">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <Brain className="h-5 w-5 text-primary" />
-                AI Insights
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Simulation Area */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Simulation Controls */}
+            <Card className="p-6 bg-gray-900 border-gray-800">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                <Play className="h-5 w-5 text-primary" />
+                Simulation Controls
               </h3>
-              <div className="space-y-3">
-                {insights.map((insight, index) => (
-                  <div key={index} className={`p-4 rounded-lg border ${getInsightColor(insight.type)}`}>
-                    <div className="flex items-start gap-3">
-                      <insight.icon className="h-5 w-5 mt-0.5" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{insight.message}</p>
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {insight.timing}
-                        </p>
+              
+              {simulationState === 'running' && (
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-white">Simulation Progress</span>
+                    <span className="text-sm text-gray-400">{simulationProgress}% Complete</span>
+                  </div>
+                  <Progress value={simulationProgress} className="h-2" />
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
+                      <Pause className="h-4 w-4 mr-2" />
+                      Pause
+                    </Button>
+                    <Button size="sm" variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Restart
+                    </Button>
+                    <Button size="sm" variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Settings
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {simulationState === 'completed' && (
+                <div className="text-center py-8">
+                  <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
+                  <h4 className="text-lg font-medium mb-2 text-white">Simulation Complete!</h4>
+                  <p className="text-gray-400 mb-6">
+                    Review the insights and feedback below to improve your lesson plan
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button onClick={resetSimulation} variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      New Simulation
+                    </Button>
+                    <Button className="bg-primary hover:bg-primary/90">
+                      Save Results
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Card>
+
+            {/* Real-time Insights */}
+            {(simulationState === 'running' || simulationState === 'completed') && (
+              <Card className="p-6 bg-gray-900 border-gray-800">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                  <Brain className="h-5 w-5 text-primary" />
+                  AI Insights
+                </h3>
+                <div className="space-y-3">
+                  {insights.map((insight, index) => (
+                    <div key={index} className={`p-4 rounded-lg border ${getInsightColor(insight.type)}`}>
+                      <div className="flex items-start gap-3">
+                        <insight.icon className="h-5 w-5 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-white">{insight.message}</p>
+                          <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {insight.timing}
+                          </p>
+                        </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </div>
+
+          {/* Sidebar - Virtual Students */}
+          <div className="space-y-6">
+            <Card className="p-6 bg-gray-900 border-gray-800">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                <Users className="h-5 w-5 text-primary" />
+                Virtual Students
+              </h3>
+              <div className="space-y-4">
+                {virtualStudents.map((student, index) => (
+                  <div key={index} className="p-3 rounded-lg bg-gray-800 border border-gray-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-sm text-white">{student.name}</span>
+                      <span className={`text-xs font-medium ${getEngagementColor(student.engagement)}`}>
+                        {student.engagement}
+                      </span>
+                    </div>
+                    <div className="text-xs text-gray-400 space-y-1">
+                      <div>Type: {student.personality}</div>
+                      <div>Level: {student.difficulty}</div>
                     </div>
                   </div>
                 ))}
               </div>
             </Card>
-          )}
-        </div>
 
-        {/* Sidebar - Virtual Students */}
-        <div className="space-y-6">
-          <Card className="p-6 bg-card border-border">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              Virtual Students
-            </h3>
-            <div className="space-y-4">
-              {virtualStudents.map((student, index) => (
-                <div key={index} className="p-3 rounded-lg bg-secondary border border-border">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm">{student.name}</span>
-                    <span className={`text-xs font-medium ${getEngagementColor(student.engagement)}`}>
-                      {student.engagement}
-                    </span>
-                  </div>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <div>Type: {student.personality}</div>
-                    <div>Level: {student.difficulty}</div>
-                  </div>
+            <Card className="p-6 bg-gray-900 border-gray-800">
+              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Live Feedback
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="p-3 rounded-lg bg-gray-800">
+                  <p className="font-medium text-white">Alex:</p>
+                  <p className="text-gray-400">"I understand the equation, but can we see more examples?"</p>
                 </div>
-              ))}
-            </div>
-          </Card>
-
-          <Card className="p-6 bg-card border-border">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <MessageCircle className="h-5 w-5 text-primary" />
-              Live Feedback
-            </h3>
-            <div className="space-y-3 text-sm">
-              <div className="p-3 rounded-lg bg-secondary">
-                <p className="font-medium">Alex:</p>
-                <p className="text-muted-foreground">"I understand the equation, but can we see more examples?"</p>
+                <div className="p-3 rounded-lg bg-gray-800">
+                  <p className="font-medium text-white">Emma:</p>
+                  <p className="text-gray-400">"This is confusing. Can you explain it differently?"</p>
+                </div>
+                <div className="p-3 rounded-lg bg-gray-800">
+                  <p className="font-medium text-white">Marcus:</p>
+                  <p className="text-gray-400">"I'm lost. Can we slow down?"</p>
+                </div>
               </div>
-              <div className="p-3 rounded-lg bg-secondary">
-                <p className="font-medium">Emma:</p>
-                <p className="text-muted-foreground">"This is confusing. Can you explain it differently?"</p>
-              </div>
-              <div className="p-3 rounded-lg bg-secondary">
-                <p className="font-medium">Marcus:</p>
-                <p className="text-muted-foreground">"I'm lost. Can we slow down?"</p>
-              </div>
-            </div>
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
-    </div>
+    </VirtualClassroomLayout>
   );
 };

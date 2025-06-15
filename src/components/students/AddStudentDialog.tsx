@@ -19,11 +19,19 @@ interface AddStudentDialogProps {
   children?: React.ReactNode;
   student?: any; // For editing existing students
   isEdit?: boolean;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export const AddStudentDialog = ({ children, student, isEdit = false }: AddStudentDialogProps) => {
-  const [open, setOpen] = useState(false);
+export const AddStudentDialog = ({ children, student, isEdit = false, isOpen, onClose }: AddStudentDialogProps) => {
+  const [internalOpen, setInternalOpen] = useState(false);
   const { addStudent, updateStudent, isAddingStudent, isUpdatingStudent } = useStudents();
+  
+  // Use external state if provided, otherwise use internal state
+  const open = isOpen !== undefined ? isOpen : internalOpen;
+  const setOpen = onClose !== undefined ? (value: boolean) => {
+    if (!value) onClose();
+  } : setInternalOpen;
   
   const [formData, setFormData] = useState<StudentInsert>({
     name: student?.name || "",
@@ -87,14 +95,19 @@ export const AddStudentDialog = ({ children, student, isEdit = false }: AddStude
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
+      {children && (
+        <DialogTrigger asChild>
+          {children}
+        </DialogTrigger>
+      )}
+      {!children && (
+        <DialogTrigger asChild>
           <Button className="bg-purple-600 hover:bg-purple-700">
             <Plus className="h-4 w-4 mr-2" />
             Add Student
           </Button>
-        )}
-      </DialogTrigger>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-black border-purple-500/30">
         <DialogHeader>
           <DialogTitle className="text-white">

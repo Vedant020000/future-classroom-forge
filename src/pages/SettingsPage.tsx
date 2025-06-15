@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -153,7 +154,7 @@ export const SettingsPage = () => {
                   <SelectItem value="English">English</SelectItem>
                   <SelectItem value="History">History</SelectItem>
                   <SelectItem value="Geography">Geography</SelectItem>
-                  <SelectItem value="Art">Art</ArtSelectItem>
+                  <SelectItem value="Art">Art</SelectItem>
                   <SelectItem value="Music">Music</SelectItem>
                   <SelectItem value="Physical Education">Physical Education</SelectItem>
                   <SelectItem value="Computer Science">Computer Science</SelectItem>

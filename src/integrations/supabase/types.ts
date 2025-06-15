@@ -95,6 +95,75 @@ export type Database = {
           },
         ]
       }
+      organization_lesson_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: number | null
+          file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          file_type: string
+          grade_level: string
+          id: string
+          organization_id: string
+          status: string
+          subject: string
+          teacher_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type: string
+          grade_level: string
+          id?: string
+          organization_id: string
+          status?: string
+          subject: string
+          teacher_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: number | null
+          file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string
+          grade_level?: string
+          id?: string
+          organization_id?: string
+          status?: string
+          subject?: string
+          teacher_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_lesson_plans_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_lesson_plans_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "organization_credentials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string

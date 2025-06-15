@@ -3,10 +3,11 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, ExternalLink } from "lucide-react";
-import { LessonPlan, useLessonPlans } from "@/hooks/useLessonPlans";
+import { LessonPlan, OrganizationLessonPlan } from "@/types/lessonPlan";
+import { useLessonPlans } from "@/hooks/useLessonPlans";
 
 interface PreviewLessonPlanDialogProps {
-  lessonPlan: LessonPlan | null;
+  lessonPlan: LessonPlan | OrganizationLessonPlan | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }

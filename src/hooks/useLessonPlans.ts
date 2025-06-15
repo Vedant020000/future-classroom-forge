@@ -22,11 +22,15 @@ export interface LessonPlan {
 }
 
 export const useLessonPlans = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   console.log('useLessonPlans - Current user:', user?.id);
+  console.log('useLessonPlans - User profile:', profile);
+
+  // Check if user is an organization user (has ID starting with "org_")
+  const isOrganizationUser = user?.id?.startsWith('org_');
 
   const { data: lessonPlans = [], isLoading, error } = useQuery({
     queryKey: ['lesson-plans', user?.id],
@@ -34,6 +38,12 @@ export const useLessonPlans = () => {
       if (!user) {
         console.log('No user found, throwing error');
         throw new Error('User not authenticated');
+      }
+
+      // If this is an organization user, return empty array since they don't have database records
+      if (isOrganizationUser) {
+        console.log('Organization user detected, returning empty lesson plans array');
+        return [];
       }
       
       console.log('Fetching lesson plans for user:', user.id);
@@ -72,6 +82,11 @@ export const useLessonPlans = () => {
       duration?: number;
     }) => {
       if (!user) throw new Error('User not authenticated');
+
+      // Prevent organization users from uploading
+      if (isOrganizationUser) {
+        throw new Error('Organization users cannot upload lesson plans');
+      }
 
       // Validate file type
       const allowedTypes = ['pdf', 'docx', 'xlsx', 'doc', 'xls'];
@@ -143,6 +158,11 @@ export const useLessonPlans = () => {
     mutationFn: async (lessonPlan: LessonPlan) => {
       if (!user) throw new Error('User not authenticated');
 
+      // Prevent organization users from deleting
+      if (isOrganizationUser) {
+        throw new Error('Organization users cannot delete lesson plans');
+      }
+
       console.log('Deleting lesson plan:', lessonPlan.id);
 
       // Delete file from storage if it exists
@@ -186,7 +206,7 @@ export const useLessonPlans = () => {
   });
 
   const getFileUrl = async (filePath: string) => {
-    if (!user) return null;
+    if (!user || isOrganizationUser) return null;
     
     console.log('Getting file URL for:', filePath);
     
@@ -210,5 +230,6 @@ export const useLessonPlans = () => {
     uploadLessonPlan,
     deleteLessonPlan,
     getFileUrl,
+    isOrganizationUser,
   };
 };

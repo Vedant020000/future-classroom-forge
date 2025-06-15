@@ -18,7 +18,8 @@ import {
   Users,
   Upload,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Building2
 } from "lucide-react";
 import { useLessonPlans, LessonPlan } from "@/hooks/useLessonPlans";
 import { useAuth } from "@/hooks/useAuth";
@@ -32,12 +33,13 @@ export const LessonPlanPage = () => {
   const [previewOpen, setPreviewOpen] = useState(false);
   
   const { user } = useAuth();
-  const { lessonPlans, isLoading, error, deleteLessonPlan } = useLessonPlans();
+  const { lessonPlans, isLoading, error, deleteLessonPlan, isOrganizationUser } = useLessonPlans();
 
   console.log('LessonPlanPage - User:', user?.id);
   console.log('LessonPlanPage - Lesson plans:', lessonPlans);
   console.log('LessonPlanPage - Loading:', isLoading);
   console.log('LessonPlanPage - Error:', error);
+  console.log('LessonPlanPage - Is organization user:', isOrganizationUser);
 
   const filteredPlans = lessonPlans.filter(plan =>
     plan.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -76,7 +78,7 @@ export const LessonPlanPage = () => {
   };
 
   // Show error state
-  if (error) {
+  if (error && !isOrganizationUser) {
     return (
       <div className="p-8 space-y-8">
         <div className="flex justify-between items-center">
@@ -99,6 +101,34 @@ export const LessonPlanPage = () => {
             <Button onClick={() => window.location.reload()}>
               Try Again
             </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show organization user notice
+  if (isOrganizationUser) {
+    return (
+      <div className="p-8 space-y-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+              Lesson Plans
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage and organize your lesson plans
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <Building2 className="h-12 w-12 text-blue-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Organization Account</h3>
+            <p className="text-muted-foreground mb-4">
+              Lesson plan storage is currently available for individual teacher accounts only. 
+              Organization features are coming soon!
+            </p>
           </div>
         </div>
       </div>

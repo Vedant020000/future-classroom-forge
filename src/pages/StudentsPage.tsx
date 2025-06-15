@@ -9,7 +9,7 @@ import { ClassroomSummary } from "@/components/students/ClassroomSummary";
 
 export const StudentsPage = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { students, isLoading, deleteStudent } = useStudents();
+  const { students, isLoading } = useStudents();
 
   if (isLoading) {
     return (
@@ -79,8 +79,8 @@ export const StudentsPage = () => {
 
       {/* Add Student Dialog */}
       <AddStudentDialog 
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
       />
     </div>
   );

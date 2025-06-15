@@ -26,10 +26,17 @@ export const useLessonPlans = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  console.log('useLessonPlans - Current user:', user?.id);
+
   const { data: lessonPlans = [], isLoading, error } = useQuery({
     queryKey: ['lesson-plans', user?.id],
     queryFn: async () => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user) {
+        console.log('No user found, throwing error');
+        throw new Error('User not authenticated');
+      }
+      
+      console.log('Fetching lesson plans for user:', user.id);
       
       const { data, error } = await supabase
         .from('lesson_plans')
@@ -37,7 +44,12 @@ export const useLessonPlans = () => {
         .eq('teacher_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      console.log('Lesson plans query result:', { data, error });
+
+      if (error) {
+        console.error('Error fetching lesson plans:', error);
+        throw error;
+      }
       return data as LessonPlan[];
     },
     enabled: !!user,
@@ -68,13 +80,20 @@ export const useLessonPlans = () => {
         throw new Error('Please upload a PDF, Word document, or Excel file only');
       }
 
+      console.log('Uploading file:', file.name, 'for user:', user.id);
+
       // Upload file to storage
       const fileName = `${user.id}/${Date.now()}_${file.name}`;
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('lesson-plans')
         .upload(fileName, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error('Storage upload error:', uploadError);
+        throw uploadError;
+      }
+
+      console.log('File uploaded successfully:', uploadData);
 
       // Create lesson plan record
       const { data, error } = await supabase
@@ -95,7 +114,12 @@ export const useLessonPlans = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database insert error:', error);
+        throw error;
+      }
+
+      console.log('Lesson plan created:', data);
       return data;
     },
     onSuccess: () => {
@@ -106,6 +130,7 @@ export const useLessonPlans = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Upload mutation error:', error);
       toast({
         title: "Upload Failed",
         description: error.message || "Failed to upload lesson plan",
@@ -118,20 +143,30 @@ export const useLessonPlans = () => {
     mutationFn: async (lessonPlan: LessonPlan) => {
       if (!user) throw new Error('User not authenticated');
 
+      console.log('Deleting lesson plan:', lessonPlan.id);
+
       // Delete file from storage if it exists
       if (lessonPlan.file_path) {
-        await supabase.storage
+        const { error: storageError } = await supabase.storage
           .from('lesson-plans')
           .remove([lessonPlan.file_path]);
+        
+        if (storageError) {
+          console.error('Storage delete error:', storageError);
+        }
       }
 
       // Delete lesson plan record
       const { error } = await supabase
         .from('lesson_plans')
         .delete()
-        .eq('id', lessonPlan.id);
+        .eq('id', lessonPlan.id)
+        .eq('teacher_id', user.id); // Ensure user can only delete their own plans
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database delete error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lesson-plans', user?.id] });
@@ -141,6 +176,7 @@ export const useLessonPlans = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Delete mutation error:', error);
       toast({
         title: "Delete Failed",
         description: error.message || "Failed to delete lesson plan",
@@ -150,10 +186,20 @@ export const useLessonPlans = () => {
   });
 
   const getFileUrl = async (filePath: string) => {
-    const { data } = await supabase.storage
+    if (!user) return null;
+    
+    console.log('Getting file URL for:', filePath);
+    
+    const { data, error } = await supabase.storage
       .from('lesson-plans')
       .createSignedUrl(filePath, 3600); // 1 hour expiry
     
+    if (error) {
+      console.error('Error getting file URL:', error);
+      return null;
+    }
+    
+    console.log('File URL generated:', data?.signedUrl);
     return data?.signedUrl;
   };
 

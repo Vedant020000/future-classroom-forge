@@ -17,9 +17,11 @@ import {
   Clock,
   Users,
   Upload,
-  FileText
+  FileText,
+  AlertCircle
 } from "lucide-react";
 import { useLessonPlans, LessonPlan } from "@/hooks/useLessonPlans";
+import { useAuth } from "@/hooks/useAuth";
 import { UploadLessonPlanDialog } from "@/components/lesson-plans/UploadLessonPlanDialog";
 import { PreviewLessonPlanDialog } from "@/components/lesson-plans/PreviewLessonPlanDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -29,7 +31,13 @@ export const LessonPlanPage = () => {
   const [previewLessonPlan, setPreviewLessonPlan] = useState<LessonPlan | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   
-  const { lessonPlans, isLoading, deleteLessonPlan } = useLessonPlans();
+  const { user } = useAuth();
+  const { lessonPlans, isLoading, error, deleteLessonPlan } = useLessonPlans();
+
+  console.log('LessonPlanPage - User:', user?.id);
+  console.log('LessonPlanPage - Lesson plans:', lessonPlans);
+  console.log('LessonPlanPage - Loading:', isLoading);
+  console.log('LessonPlanPage - Error:', error);
 
   const filteredPlans = lessonPlans.filter(plan =>
     plan.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,6 +75,37 @@ export const LessonPlanPage = () => {
     deleteLessonPlan.mutate(lessonPlan);
   };
 
+  // Show error state
+  if (error) {
+    return (
+      <div className="p-8 space-y-8">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+              Lesson Plans
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Manage and organize your lesson plans
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">Error loading lesson plans</h3>
+            <p className="text-muted-foreground mb-4">
+              {error?.message || "An unexpected error occurred"}
+            </p>
+            <Button onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state
   if (isLoading) {
     return (
       <div className="p-8 space-y-8">
@@ -87,6 +126,7 @@ export const LessonPlanPage = () => {
     );
   }
 
+  // Show main content
   return (
     <div className="p-8 space-y-8">
       <div className="flex justify-between items-center">

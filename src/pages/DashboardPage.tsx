@@ -2,8 +2,11 @@
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Users, Monitor, TrendingUp, Clock, Star } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export const DashboardPage = () => {
+  const { profile } = useAuth();
+
   const stats = [
     {
       title: "Lesson Plans Created",
@@ -14,7 +17,7 @@ export const DashboardPage = () => {
     },
     {
       title: "Students Managed",
-      value: "156",
+      value: profile?.student_count?.toString() || "156",
       icon: Users,
       change: "+3 new this week",
       trend: "up"
@@ -45,10 +48,12 @@ export const DashboardPage = () => {
     <div className="p-8 space-y-8">
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-          Welcome back, Teacher
+          Welcome back, {profile?.teacher_name || 'Teacher'}
         </h1>
         <p className="text-muted-foreground mt-2">
           Here's what's happening in your classroom today
+          {profile?.grade_level && ` - ${profile.grade_level}`}
+          {profile?.school_name && ` at ${profile.school_name}`}
         </p>
       </div>
 

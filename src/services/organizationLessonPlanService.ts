@@ -37,7 +37,7 @@ export const organizationLessonPlanService = {
 
     // Upload file to organization storage
     const fileName = `${organizationId}/${Date.now()}_${file.name}`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: storageData, error: uploadError } = await supabase.storage
       .from('organization-lesson-plans')
       .upload(fileName, file);
 
@@ -46,7 +46,7 @@ export const organizationLessonPlanService = {
       throw uploadError;
     }
 
-    console.log('Organization file uploaded successfully:', uploadData);
+    console.log('Organization file uploaded successfully:', storageData);
 
     // Create organization lesson plan record
     const { data, error } = await supabase
@@ -59,7 +59,7 @@ export const organizationLessonPlanService = {
         grade_level,
         description,
         duration,
-        file_path: uploadData.path,
+        file_path: storageData.path,
         file_name: file.name,
         file_type: fileExtension,
         file_size: file.size,

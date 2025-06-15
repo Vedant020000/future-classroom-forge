@@ -79,8 +79,8 @@ export const StudentsPage = () => {
 
       {/* Add Student Dialog */}
       <AddStudentDialog 
-        isOpen={isAddDialogOpen}
-        onClose={() => setIsAddDialogOpen(false)}
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
       />
     </div>
   );

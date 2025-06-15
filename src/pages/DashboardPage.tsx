@@ -3,23 +3,33 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Users, Monitor, TrendingUp, Clock, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useLessonPlans } from "@/hooks/useLessonPlans";
+import { useStudents } from "@/hooks/useStudents";
 
 export const DashboardPage = () => {
   const { profile } = useAuth();
+  const { lessonPlans, isLoading: lessonPlansLoading } = useLessonPlans();
+  const { students, isLoading: studentsLoading } = useStudents();
+
+  // Calculate real stats from data
+  const totalLessonPlans = lessonPlans?.length || 0;
+  const activeLessonPlans = lessonPlans?.filter(plan => plan.status === 'active').length || 0;
+  const completedLessonPlans = lessonPlans?.filter(plan => plan.status === 'completed').length || 0;
+  const totalStudents = students?.length || 0;
 
   const stats = [
     {
       title: "Lesson Plans Created",
-      value: "24",
+      value: totalLessonPlans.toString(),
       icon: BookOpen,
-      change: "+12% from last month",
+      change: `${activeLessonPlans} active plans`,
       trend: "up"
     },
     {
       title: "Students Managed",
-      value: profile?.student_count?.toString() || "156",
+      value: totalStudents.toString(),
       icon: Users,
-      change: "+3 new this week",
+      change: profile?.grade_level ? `Grade ${profile.grade_level}` : "All grades",
       trend: "up"
     },
     {
@@ -38,10 +48,33 @@ export const DashboardPage = () => {
     }
   ];
 
-  const recentPlans = [
-    { title: "Introduction to Algebra", subject: "Mathematics", created: "2 days ago", status: "Active" },
-    { title: "World War II History", subject: "History", created: "5 days ago", status: "Testing" },
-    { title: "Chemical Reactions", subject: "Science", created: "1 week ago", status: "Completed" },
+  // Get recent lesson plans (last 3)
+  const recentPlans = lessonPlans?.slice(0, 3).map(plan => ({
+    title: plan.title,
+    subject: plan.subject,
+    created: new Date(plan.created_at).toLocaleDateString(),
+    status: plan.status
+  })) || [];
+
+  const progressData = [
+    {
+      label: "Lesson Plans Completed",
+      current: completedLessonPlans,
+      total: totalLessonPlans,
+      value: totalLessonPlans > 0 ? (completedLessonPlans / totalLessonPlans) * 100 : 0
+    },
+    {
+      label: "Virtual Classes Tested",
+      current: 5,
+      total: 8,
+      value: 62
+    },
+    {
+      label: "Student Data Updated",
+      current: totalStudents,
+      total: totalStudents + 3,
+      value: totalStudents > 0 ? (totalStudents / (totalStudents + 3)) * 100 : 0
+    }
   ];
 
   return (
@@ -81,21 +114,29 @@ export const DashboardPage = () => {
             Recent Lesson Plans
           </h3>
           <div className="space-y-4">
-            {recentPlans.map((plan, index) => (
-              <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
-                <div>
-                  <p className="font-medium text-foreground">{plan.title}</p>
-                  <p className="text-sm text-muted-foreground">{plan.subject} • {plan.created}</p>
+            {recentPlans.length > 0 ? (
+              recentPlans.map((plan, index) => (
+                <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-secondary">
+                  <div>
+                    <p className="font-medium text-foreground">{plan.title}</p>
+                    <p className="text-sm text-muted-foreground">{plan.subject} • {plan.created}</p>
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    plan.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                    plan.status === 'draft' ? 'bg-yellow-500/20 text-yellow-400' :
+                    plan.status === 'completed' ? 'bg-blue-500/20 text-blue-400' :
+                    'bg-gray-500/20 text-gray-400'
+                  }`}>
+                    {plan.status}
+                  </span>
                 </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  plan.status === 'Active' ? 'bg-green-500/20 text-green-400' :
-                  plan.status === 'Testing' ? 'bg-yellow-500/20 text-yellow-400' :
-                  'bg-blue-500/20 text-blue-400'
-                }`}>
-                  {plan.status}
-                </span>
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No lesson plans yet</p>
+                <p className="text-sm text-muted-foreground">Create your first lesson plan to see it here</p>
               </div>
-            ))}
+            )}
           </div>
         </Card>
 
@@ -106,27 +147,15 @@ export const DashboardPage = () => {
             This Week's Progress
           </h3>
           <div className="space-y-6">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Lesson Plans Completed</span>
-                <span>7/10</span>
+            {progressData.map((item, index) => (
+              <div key={index}>
+                <div className="flex justify-between text-sm mb-2">
+                  <span>{item.label}</span>
+                  <span>{item.current}/{item.total}</span>
+                </div>
+                <Progress value={item.value} className="h-2" />
               </div>
-              <Progress value={70} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Virtual Classes Tested</span>
-                <span>5/8</span>
-              </div>
-              <Progress value={62} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Student Data Updated</span>
-                <span>12/15</span>
-              </div>
-              <Progress value={80} className="h-2" />
-            </div>
+            ))}
           </div>
         </Card>
       </div>

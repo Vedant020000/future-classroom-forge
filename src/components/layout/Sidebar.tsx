@@ -6,14 +6,15 @@ import {
   PlusCircle, 
   Monitor, 
   Users,
-  GraduationCap
+  GraduationCap,
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   {
     name: "Dashboard",
-    href: "/",
+    href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
@@ -35,6 +36,11 @@ const navigation = [
     name: "Students",
     href: "/students",
     icon: Users,
+  },
+  {
+    name: "Settings",
+    href: "/settings",
+    icon: Settings,
   },
 ];
 

@@ -13,6 +13,7 @@ import { LessonPlanPage } from "./pages/LessonPlanPage";
 import { CreateLessonPlanPage } from "./pages/CreateLessonPlanPage";
 import { VirtualClassroomPage } from "./pages/VirtualClassroomPage";
 import { StudentsPage } from "./pages/StudentsPage";
+import { SettingsPage } from "./pages/SettingsPage";
 import { AuthPage } from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="lesson-plans" element={<LessonPlanPage />} />
               <Route path="create-lesson-plan" element={<CreateLessonPlanPage />} />
               <Route path="students" element={<StudentsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
             </Route>
             <Route path="/virtual-classroom" element={
               <ProtectedRoute>

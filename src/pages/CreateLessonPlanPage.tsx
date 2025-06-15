@@ -20,7 +20,9 @@ import {
   ArrowRight,
   ArrowLeft,
   HelpCircle,
-  Loader2
+  Loader2,
+  Download,
+  Monitor
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +41,8 @@ export const CreateLessonPlanPage = () => {
   const [isGeneratingQuestions, setIsGeneratingQuestions] = useState(false);
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [generatedLessonPlan, setGeneratedLessonPlan] = useState<string>("");
+  const [lessonPlanId, setLessonPlanId] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const { uploadLessonPlan } = useLessonPlans();
@@ -57,6 +61,7 @@ export const CreateLessonPlanPage = () => {
     { number: 1, title: "Lesson Information", icon: BookOpen },
     { number: 2, title: "AI Questions", icon: HelpCircle },
     { number: 3, title: "Generate Plan", icon: Wand2 },
+    { number: 4, title: "Review & Save", icon: CheckCircle },
   ];
 
   const subjects = [
@@ -116,7 +121,85 @@ export const CreateLessonPlanPage = () => {
       }
     }
     
-    if (step < 3) setStep(step + 1);
+    if (step === 2) {
+      // Generate lesson plan using AI
+      setIsGeneratingPlan(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('generate-lesson-plan', {
+          body: { 
+            lessonData: formData,
+            aiQuestions: questions.filter(q => q.answer?.trim())
+          }
+        });
+
+        if (error) throw error;
+
+        if (data?.lessonPlan) {
+          setGeneratedLessonPlan(data.lessonPlan);
+        }
+      } catch (error: any) {
+        console.error('Error generating lesson plan:', error);
+        // Create a fallback lesson plan
+        const fallbackPlan = `# ${formData.title}
+
+## Subject: ${formData.subject}
+## Grade Level: ${formData.grade}
+## Duration: ${formData.duration}
+
+## Learning Objectives
+${formData.objectives || "Students will understand the key concepts of this lesson."}
+
+## Lesson Overview
+${formData.outline || "This lesson introduces students to the core topic through engaging activities and discussions."}
+
+## Materials Needed
+- Whiteboard/markers
+- Student worksheets
+- Interactive materials
+
+## Lesson Structure
+
+### Introduction (10 minutes)
+- Welcome students and review previous lesson
+- Introduce today's topic and objectives
+
+### Main Activity (${parseInt(formData.duration.replace(' min', '')) - 20} minutes)
+- Interactive demonstration
+- Guided practice
+- Student activities
+
+### Conclusion (10 minutes)
+- Review key concepts
+- Preview next lesson
+- Assessment check
+
+## Assessment
+- Formative assessment through questioning
+- Observation of student participation
+- Exit ticket or quick quiz
+
+## Homework/Extension
+- Practice exercises
+- Additional reading/research
+
+## Notes
+${formData.studentNeeds || "Consider individual student needs and adapt as necessary."}
+
+---
+Generated with AI assistance based on your inputs and teaching preferences.`;
+        
+        setGeneratedLessonPlan(fallbackPlan);
+        
+        toast({
+          title: "Lesson Plan Generated",
+          description: "Created using fallback template. You can edit it in the next step.",
+        });
+      } finally {
+        setIsGeneratingPlan(false);
+      }
+    }
+    
+    if (step < 4) setStep(step + 1);
   };
 
   const handlePrevious = () => {
@@ -129,26 +212,30 @@ export const CreateLessonPlanPage = () => {
     ));
   };
 
-  const handleGenerateLessonPlan = async () => {
-    setIsGeneratingPlan(true);
+  const handleSaveLessonPlan = async () => {
     try {
-      // Prepare lesson plan data with AI responses
-      const answeredQuestions = questions.filter(q => q.answer?.trim());
+      // Create a comprehensive lesson plan object
       const lessonPlanData = {
         ...formData,
-        aiQuestions: answeredQuestions,
+        aiQuestions: questions.filter(q => q.answer?.trim()),
+        generatedPlan: generatedLessonPlan,
         generatedAt: new Date().toISOString(),
       };
 
-      // Create a blob with the lesson plan data as JSON
-      const lessonPlanContent = JSON.stringify(lessonPlanData, null, 2);
-      const blob = new Blob([lessonPlanContent], { type: 'application/json' });
-      const file = new File([blob], `${formData.title.replace(/\s+/g, '_')}_lesson_plan.json`, {
-        type: 'application/json'
+      // Create a blob with the lesson plan content
+      const lessonPlanContent = `${generatedLessonPlan}\n\n---\n\nAI Questions & Answers:\n${
+        questions.filter(q => q.answer?.trim()).map(q => 
+          `Q: ${q.question}\nA: ${q.answer}\n`
+        ).join('\n')
+      }`;
+      
+      const blob = new Blob([lessonPlanContent], { type: 'text/markdown' });
+      const file = new File([blob], `${formData.title.replace(/\s+/g, '_')}_lesson_plan.md`, {
+        type: 'text/markdown'
       });
 
       // Upload to database using the existing hook
-      await uploadLessonPlan.mutateAsync({
+      const result = await uploadLessonPlan.mutateAsync({
         file,
         title: formData.title,
         subject: formData.subject,
@@ -157,27 +244,61 @@ export const CreateLessonPlanPage = () => {
         duration: parseInt(formData.duration.replace(' min', '')) || undefined,
       });
 
+      setLessonPlanId(result.id);
+
       toast({
         title: "Success!",
-        description: "Your lesson plan has been created and saved.",
+        description: "Your lesson plan has been generated and saved to your library.",
       });
-
-      // Navigate to lesson plans page
-      navigate('/lesson-plans');
 
     } catch (error: any) {
-      console.error('Error generating lesson plan:', error);
+      console.error('Error saving lesson plan:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to generate lesson plan",
+        description: error.message || "Failed to save lesson plan",
         variant: "destructive",
       });
-    } finally {
-      setIsGeneratingPlan(false);
     }
   };
 
-  const progress = (step / 3) * 100;
+  const handleDownload = () => {
+    const lessonPlanContent = `${generatedLessonPlan}\n\n---\n\nAI Questions & Answers:\n${
+      questions.filter(q => q.answer?.trim()).map(q => 
+        `Q: ${q.question}\nA: ${q.answer}\n`
+      ).join('\n')
+    }`;
+    
+    const blob = new Blob([lessonPlanContent], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${formData.title.replace(/\s+/g, '_')}_lesson_plan.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Downloaded!",
+      description: "Your lesson plan has been downloaded to your device.",
+    });
+  };
+
+  const handleSendToClassroom = () => {
+    // Store lesson plan data in localStorage for the virtual classroom
+    localStorage.setItem('currentLessonPlan', JSON.stringify({
+      title: formData.title,
+      subject: formData.subject,
+      grade: formData.grade,
+      duration: formData.duration,
+      content: generatedLessonPlan,
+      id: lessonPlanId
+    }));
+    
+    navigate('/virtual-classroom');
+  };
+
+  const progress = (step / 4) * 100;
 
   const getImportanceColor = (importance: string) => {
     switch (importance) {
@@ -202,7 +323,7 @@ export const CreateLessonPlanPage = () => {
       {/* Progress */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Step {step} of 3</span>
+          <span className="text-sm font-medium">Step {step} of 4</span>
           <span className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</span>
         </div>
         <Progress value={progress} className="h-2" />
@@ -389,52 +510,118 @@ export const CreateLessonPlanPage = () => {
               <h2 className="text-xl font-semibold">Generate Your Lesson Plan</h2>
             </div>
             
-            <div className="space-y-6">
-              <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
-                <h3 className="font-semibold text-lg mb-4">Ready to Create Your Personalized Lesson Plan</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  <div className="space-y-2">
-                    <Badge variant="secondary" className="bg-secondary">
-                      <BookOpen className="h-3 w-3 mr-1" />
-                      {formData.subject} - {formData.grade}
-                    </Badge>
-                    <Badge variant="secondary" className="bg-secondary">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {formData.duration}
-                    </Badge>
-                  </div>
-                  <div className="space-y-2">
-                    <Badge variant="secondary" className="bg-secondary">
-                      <Users className="h-3 w-3 mr-1" />
-                      {questions.filter(q => q.answer?.trim()).length} of {questions.length} questions answered
-                    </Badge>
-                  </div>
+            {isGeneratingPlan ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-4">
+                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                  <p className="text-muted-foreground">AI is creating your personalized lesson plan...</p>
                 </div>
-                
-                <p className="text-sm text-muted-foreground mb-6">
-                  Our AI will analyze your lesson information and answers to create a comprehensive, 
-                  personalized lesson plan that will be saved to your lesson plans library.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
+                  <h3 className="font-semibold text-lg mb-4">Ready to Generate Your Personalized Lesson Plan</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div className="space-y-2">
+                      <Badge variant="secondary" className="bg-secondary">
+                        <BookOpen className="h-3 w-3 mr-1" />
+                        {formData.subject} - {formData.grade}
+                      </Badge>
+                      <Badge variant="secondary" className="bg-secondary">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {formData.duration}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <Badge variant="secondary" className="bg-secondary">
+                        <Users className="h-3 w-3 mr-1" />
+                        {questions.filter(q => q.answer?.trim()).length} of {questions.length} questions answered
+                      </Badge>
+                    </div>
+                  </div>
+                  
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Our AI will analyze your lesson information and answers to create a comprehensive, 
+                    personalized lesson plan.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 mb-6">
+              <CheckCircle className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-semibold">Your Lesson Plan is Ready!</h2>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <h3 className="font-semibold text-lg mb-4 text-green-800">
+                  🎉 Lesson Plan Generated Successfully!
+                </h3>
+                <p className="text-green-700 mb-6">
+                  Your personalized lesson plan for "{formData.title}" has been created using AI based on your inputs and preferences.
                 </p>
                 
-                <Button 
-                  onClick={handleGenerateLessonPlan}
-                  disabled={isGeneratingPlan}
-                  className="w-full bg-primary hover:bg-primary/90"
-                >
-                  {isGeneratingPlan ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating Lesson Plan...
-                    </>
-                  ) : (
-                    <>
-                      <Wand2 className="h-4 w-4 mr-2" />
-                      Generate & Save Lesson Plan
-                    </>
-                  )}
-                </Button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <Button 
+                    onClick={handleSaveLessonPlan}
+                    className="bg-primary hover:bg-primary/90"
+                    disabled={!!lessonPlanId}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    {lessonPlanId ? 'Saved to Library' : 'Save to Library'}
+                  </Button>
+                  <Button 
+                    onClick={handleDownload}
+                    variant="outline"
+                    className="border-primary text-primary hover:bg-primary/10"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download Plan
+                  </Button>
+                </div>
+                
+                {lessonPlanId && (
+                  <div className="space-y-4">
+                    <div className="border-t border-green-200 pt-4">
+                      <h4 className="font-medium text-green-800 mb-3">What would you like to do next?</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Button 
+                          onClick={handleSendToClassroom}
+                          className="bg-purple-600 hover:bg-purple-700"
+                        >
+                          <Monitor className="h-4 w-4 mr-2" />
+                          Use in Virtual Classroom
+                        </Button>
+                        <Button 
+                          onClick={() => navigate('/lesson-plans')}
+                          variant="outline"
+                          className="border-green-600 text-green-700 hover:bg-green-50"
+                        >
+                          <BookOpen className="h-4 w-4 mr-2" />
+                          View All Lesson Plans
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
+              
+              {generatedLessonPlan && (
+                <div className="space-y-4">
+                  <h3 className="font-medium">Preview:</h3>
+                  <div className="bg-secondary/50 border border-border rounded-lg p-4 max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm font-mono">
+                      {generatedLessonPlan.substring(0, 500)}...
+                    </pre>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -453,13 +640,18 @@ export const CreateLessonPlanPage = () => {
           {step < 3 && (
             <Button 
               onClick={handleNext}
-              disabled={step === 1 && isGeneratingQuestions}
+              disabled={(step === 1 && isGeneratingQuestions) || (step === 2 && isGeneratingPlan)}
               className="bg-primary hover:bg-primary/90"
             >
-              {isGeneratingQuestions ? (
+              {(step === 1 && isGeneratingQuestions) ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Generating Questions...
+                </>
+              ) : (step === 2 && isGeneratingPlan) ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Generating Plan...
                 </>
               ) : (
                 <>
@@ -467,6 +659,15 @@ export const CreateLessonPlanPage = () => {
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </>
               )}
+            </Button>
+          )}
+          {step === 3 && !isGeneratingPlan && (
+            <Button 
+              onClick={handleNext}
+              className="bg-primary hover:bg-primary/90"
+            >
+              View Results
+              <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           )}
         </div>

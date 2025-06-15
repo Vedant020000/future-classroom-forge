@@ -1,293 +1,211 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { VirtualClassroomLayout } from "@/components/layout/VirtualClassroomLayout";
 import { LoadingScreen } from "@/components/LoadingScreen";
-import { LessonPlanSelector } from "@/components/virtual-classroom/LessonPlanSelector";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { 
+  Video, 
+  Mic, 
+  MicOff, 
+  VideoOff, 
   Monitor, 
-  Play, 
-  Pause, 
-  RotateCcw, 
-  Settings, 
   Users, 
-  MessageCircle,
-  Brain,
-  AlertTriangle,
-  CheckCircle,
-  Clock
+  MessageSquare,
+  Settings,
+  Hand,
+  MoreVertical
 } from "lucide-react";
-
-interface LessonPlan {
-  id: number;
-  title: string;
-  subject: string;
-  grade: string;
-  duration: string;
-  students: number;
-  created: string;
-  status: string;
-  description: string;
-}
-
-type SimulationState = 'selecting' | 'loading' | 'running' | 'completed';
+import { useAuth } from "@/hooks/useAuth";
 
 export const VirtualClassroomPage = () => {
-  const [simulationState, setSimulationState] = useState<SimulationState>('selecting');
-  const [selectedPlan, setSelectedPlan] = useState<LessonPlan | null>(null);
-  const [simulationProgress, setSimulationProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isMicOn, setIsMicOn] = useState(true);
+  const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [participants] = useState([
+    { id: 1, name: "John Smith", avatar: "JS", isTeacher: false, handRaised: false },
+    { id: 2, name: "Sarah Johnson", avatar: "SJ", isTeacher: false, handRaised: true },
+    { id: 3, name: "Mike Chen", avatar: "MC", isTeacher: false, handRaised: false },
+  ]);
+  
+  const { profile } = useAuth();
 
-  const virtualStudents = [
-    { name: "Alex Chen", personality: "Analytical", engagement: "High", difficulty: "Advanced" },
-    { name: "Emma Rodriguez", personality: "Creative", engagement: "Medium", difficulty: "Grade Level" },
-    { name: "Marcus Johnson", personality: "Kinesthetic", engagement: "Low", difficulty: "Below Grade" },
-    { name: "Sofia Patel", personality: "Social", engagement: "High", difficulty: "Grade Level" },
-    { name: "Jamie Williams", personality: "Quiet", engagement: "Medium", difficulty: "Advanced" }
-  ];
+  useEffect(() => {
+    // Simulate loading time for classroom setup
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
 
-  const insights = [
-    {
-      type: "warning",
-      icon: AlertTriangle,
-      message: "Marcus may struggle with abstract concepts - consider concrete examples",
-      timing: "5 minutes in"
-    },
-    {
-      type: "success", 
-      icon: CheckCircle,
-      message: "Alex and Sofia are showing strong engagement with the current activity",
-      timing: "12 minutes in"
-    },
-    {
-      type: "suggestion",
-      icon: Brain,
-      message: "Emma might benefit from visual representations - try adding diagrams",
-      timing: "18 minutes in"
-    }
-  ];
+    return () => clearTimeout(timer);
+  }, []);
 
-  const handleSelectPlan = (plan: LessonPlan) => {
-    setSelectedPlan(plan);
-    setSimulationState('loading');
-    
-    // Simulate loading
-    setTimeout(() => {
-      setSimulationState('running');
-      startSimulation();
-    }, 3000);
-  };
-
-  const handleUploadPlan = (file: File) => {
-    console.log('Uploading file:', file.name);
-    // Handle file upload logic here
-    const mockPlan: LessonPlan = {
-      id: 999,
-      title: file.name.replace(/\.[^/.]+$/, ""),
-      subject: "Uploaded",
-      grade: "Custom",
-      duration: "60 min",
-      students: 30,
-      created: new Date().toISOString().split('T')[0],
-      status: "Ready",
-      description: "Uploaded lesson plan"
-    };
-    handleSelectPlan(mockPlan);
-  };
-
-  const startSimulation = () => {
-    const interval = setInterval(() => {
-      setSimulationProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setSimulationState('completed');
-          return 100;
-        }
-        return prev + 2;
-      });
-    }, 100);
-  };
-
-  const resetSimulation = () => {
-    setSimulationProgress(0);
-    setSimulationState('selecting');
-    setSelectedPlan(null);
-  };
-
-  const getEngagementColor = (engagement: string) => {
-    switch (engagement) {
-      case 'High': return 'text-green-400';
-      case 'Medium': return 'text-yellow-400';
-      case 'Low': return 'text-red-400';
-      default: return 'text-gray-400';
-    }
-  };
-
-  const getInsightColor = (type: string) => {
-    switch (type) {
-      case 'warning': return 'border-yellow-500/30 bg-yellow-500/10';
-      case 'success': return 'border-green-500/30 bg-green-500/10';
-      case 'suggestion': return 'border-blue-500/30 bg-blue-500/10';
-      default: return 'border-gray-600 bg-gray-900';
-    }
-  };
-
-  if (simulationState === 'loading') {
-    return <LoadingScreen message={`Loading ${selectedPlan?.title}...`} />;
-  }
-
-  if (simulationState === 'selecting') {
-    return (
-      <VirtualClassroomLayout>
-        <LessonPlanSelector 
-          onSelectPlan={handleSelectPlan}
-          onUploadPlan={handleUploadPlan}
-        />
-      </VirtualClassroomLayout>
-    );
+  if (isLoading) {
+    return <LoadingScreen message="Setting up your virtual classroom..." />;
   }
 
   return (
     <VirtualClassroomLayout>
-      <div className="p-8 space-y-8 pt-20">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-            Virtual Classroom - {selectedPlan?.title}
-          </h1>
-          <p className="text-gray-400 mt-2">
-            {selectedPlan?.subject} • {selectedPlan?.grade} • {selectedPlan?.duration}
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Simulation Area */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Simulation Controls */}
-            <Card className="p-6 bg-gray-900 border-gray-800">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
-                <Play className="h-5 w-5 text-primary" />
-                Simulation Controls
-              </h3>
-              
-              {simulationState === 'running' && (
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-white">Simulation Progress</span>
-                    <span className="text-sm text-gray-400">{simulationProgress}% Complete</span>
-                  </div>
-                  <Progress value={simulationProgress} className="h-2" />
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
-                      <Pause className="h-4 w-4 mr-2" />
-                      Pause
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      Restart
-                    </Button>
-                    <Button size="sm" variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </Button>
-                  </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 h-screen gap-4 p-4">
+        {/* Main Video Area */}
+        <div className="lg:col-span-3 space-y-4">
+          {/* Teacher/Main Screen */}
+          <Card className="relative bg-gray-900 border-gray-700 h-96 lg:h-[60%] overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-900/20 to-blue-900/20 flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <div className="w-24 h-24 bg-purple-600 rounded-full flex items-center justify-center text-2xl font-bold text-white mx-auto">
+                  {profile?.teacher_name ? profile.teacher_name.split(' ').map(n => n[0]).join('') : 'T'}
                 </div>
-              )}
-
-              {simulationState === 'completed' && (
-                <div className="text-center py-8">
-                  <CheckCircle className="h-16 w-16 text-green-400 mx-auto mb-4" />
-                  <h4 className="text-lg font-medium mb-2 text-white">Simulation Complete!</h4>
-                  <p className="text-gray-400 mb-6">
-                    Review the insights and feedback below to improve your lesson plan
-                  </p>
-                  <div className="flex gap-2 justify-center">
-                    <Button onClick={resetSimulation} variant="outline" className="border-gray-700 text-white hover:bg-gray-800">
-                      <RotateCcw className="h-4 w-4 mr-2" />
-                      New Simulation
-                    </Button>
-                    <Button className="bg-primary hover:bg-primary/90">
-                      Save Results
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </Card>
-
-            {/* Real-time Insights */}
-            {(simulationState === 'running' || simulationState === 'completed') && (
-              <Card className="p-6 bg-gray-900 border-gray-800">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
-                  <Brain className="h-5 w-5 text-primary" />
-                  AI Insights
+                <h3 className="text-xl font-semibold text-white">
+                  {profile?.teacher_name || 'Teacher'} (You)
                 </h3>
-                <div className="space-y-3">
-                  {insights.map((insight, index) => (
-                    <div key={index} className={`p-4 rounded-lg border ${getInsightColor(insight.type)}`}>
-                      <div className="flex items-start gap-3">
-                        <insight.icon className="h-5 w-5 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-white">{insight.message}</p>
-                          <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {insight.timing}
-                          </p>
-                        </div>
-                      </div>
+                <p className="text-gray-400">
+                  {profile?.user_type === 'organization' ? profile.school_name : 'Individual Teacher'}
+                </p>
+              </div>
+            </div>
+            
+            {/* Video Controls Overlay */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              <Button
+                variant={isMicOn ? "default" : "destructive"}
+                size="icon"
+                onClick={() => setIsMicOn(!isMicOn)}
+                className="rounded-full"
+              >
+                {isMicOn ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant={isVideoOn ? "default" : "destructive"}
+                size="icon"
+                onClick={() => setIsVideoOn(!isVideoOn)}
+                className="rounded-full"
+              >
+                {isVideoOn ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
+              </Button>
+              <Button
+                variant={isScreenSharing ? "secondary" : "outline"}
+                size="icon"
+                onClick={() => setIsScreenSharing(!isScreenSharing)}
+                className="rounded-full"
+              >
+                <Monitor className="h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+
+          {/* Student Video Grid */}
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 h-48 lg:h-[35%]">
+            {participants.map((participant) => (
+              <Card key={participant.id} className="relative bg-gray-800 border-gray-600 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-700/20 to-gray-900/20 flex items-center justify-center">
+                  <div className="text-center space-y-2">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white mx-auto relative ${
+                      participant.handRaised ? 'bg-yellow-600' : 'bg-blue-600'
+                    }`}>
+                      {participant.avatar}
+                      {participant.handRaised && (
+                        <Hand className="absolute -top-2 -right-2 h-4 w-4 text-yellow-400 animate-bounce" />
+                      )}
                     </div>
-                  ))}
+                    <p className="text-xs text-white font-medium">{participant.name}</p>
+                  </div>
                 </div>
               </Card>
-            )}
+            ))}
           </div>
+        </div>
 
-          {/* Sidebar - Virtual Students */}
-          <div className="space-y-6">
-            <Card className="p-6 bg-gray-900 border-gray-800">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
-                <Users className="h-5 w-5 text-primary" />
-                Virtual Students
+        {/* Sidebar */}
+        <div className="space-y-4">
+          {/* Participants Panel */}
+          <Card className="bg-gray-900 border-gray-700 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-white flex items-center">
+                <Users className="h-4 w-4 mr-2" />
+                Participants ({participants.length + 1})
               </h3>
-              <div className="space-y-4">
-                {virtualStudents.map((student, index) => (
-                  <div key={index} className="p-3 rounded-lg bg-gray-800 border border-gray-700">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-sm text-white">{student.name}</span>
-                      <span className={`text-xs font-medium ${getEngagementColor(student.engagement)}`}>
-                        {student.engagement}
-                      </span>
-                    </div>
-                    <div className="text-xs text-gray-400 space-y-1">
-                      <div>Type: {student.personality}</div>
-                      <div>Level: {student.difficulty}</div>
-                    </div>
+              <Button variant="ghost" size="icon">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="space-y-2">
+              {/* Teacher (You) */}
+              <div className="flex items-center justify-between p-2 bg-purple-900/20 rounded">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                    {profile?.teacher_name ? profile.teacher_name.split(' ').map(n => n[0]).join('') : 'T'}
                   </div>
-                ))}
+                  <span className="text-sm text-white">You (Teacher)</span>
+                </div>
+                <Mic className="h-4 w-4 text-green-400" />
               </div>
-            </Card>
+              
+              {/* Students */}
+              {participants.map((participant) => (
+                <div key={participant.id} className="flex items-center justify-between p-2 hover:bg-gray-800 rounded">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+                      {participant.avatar}
+                    </div>
+                    <span className="text-sm text-white">{participant.name}</span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    {participant.handRaised && (
+                      <Hand className="h-3 w-3 text-yellow-400" />
+                    )}
+                    <MicOff className="h-3 w-3 text-gray-400" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
 
-            <Card className="p-6 bg-gray-900 border-gray-800">
-              <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-white">
-                <MessageCircle className="h-5 w-5 text-primary" />
-                Live Feedback
+          {/* Chat Panel */}
+          <Card className="bg-gray-900 border-gray-700 p-4 flex-1">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-white flex items-center">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Chat
               </h3>
-              <div className="space-y-3 text-sm">
-                <div className="p-3 rounded-lg bg-gray-800">
-                  <p className="font-medium text-white">Alex:</p>
-                  <p className="text-gray-400">"I understand the equation, but can we see more examples?"</p>
-                </div>
-                <div className="p-3 rounded-lg bg-gray-800">
-                  <p className="font-medium text-white">Emma:</p>
-                  <p className="text-gray-400">"This is confusing. Can you explain it differently?"</p>
-                </div>
-                <div className="p-3 rounded-lg bg-gray-800">
-                  <p className="font-medium text-white">Marcus:</p>
-                  <p className="text-gray-400">"I'm lost. Can we slow down?"</p>
-                </div>
+            </div>
+            
+            <div className="space-y-3 mb-4 h-32 overflow-y-auto">
+              <div className="text-xs text-gray-400">
+                <span className="font-medium">Sarah Johnson:</span> Can you repeat the last part?
               </div>
-            </Card>
-          </div>
+              <div className="text-xs text-gray-400">
+                <span className="font-medium">Mike Chen:</span> Thanks for the explanation!
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                placeholder="Type a message..."
+                className="flex-1 bg-gray-800 border border-gray-600 rounded px-3 py-2 text-sm text-white placeholder-gray-400"
+              />
+              <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
+                Send
+              </Button>
+            </div>
+          </Card>
+
+          {/* Quick Actions */}
+          <Card className="bg-gray-900 border-gray-700 p-4">
+            <h3 className="font-semibold text-white mb-3">Quick Actions</h3>
+            <div className="space-y-2">
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                <Settings className="h-4 w-4 mr-2" />
+                Room Settings
+              </Button>
+              <Button variant="outline" size="sm" className="w-full justify-start">
+                <Monitor className="h-4 w-4 mr-2" />
+                Share Screen
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
     </VirtualClassroomLayout>

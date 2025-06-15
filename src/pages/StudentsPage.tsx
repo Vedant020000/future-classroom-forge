@@ -72,7 +72,6 @@ export const StudentsPage = () => {
             <StudentCard
               key={student.id}
               student={student}
-              onDelete={() => deleteStudent(student.id)}
             />
           ))}
         </div>
@@ -80,8 +79,8 @@ export const StudentsPage = () => {
 
       {/* Add Student Dialog */}
       <AddStudentDialog 
-        open={isAddDialogOpen}
-        onOpenChange={setIsAddDialogOpen}
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
       />
     </div>
   );

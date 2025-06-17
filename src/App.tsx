@@ -12,6 +12,11 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { LessonPlanPage } from "./pages/LessonPlanPage";
 import { CreateLessonPlanPage } from "./pages/CreateLessonPlanPage";
 import { VirtualClassroomPage } from "./pages/VirtualClassroomPage";
+import { VirtualClassroomGridPage } from "./pages/VirtualClassroomGridPage";
+import { VirtualClassroomTheaterPage } from "./pages/VirtualClassroomTheaterPage";
+import { VirtualClassroomWhiteboardPage } from "./pages/VirtualClassroomWhiteboardPage";
+import { VirtualClassroomBreakoutPage } from "./pages/VirtualClassroomBreakoutPage";
+import { VirtualClassroomAIPage } from "./pages/VirtualClassroomAIPage";
 import { StudentsPage } from "./pages/StudentsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AuthPage } from "./pages/AuthPage";
@@ -47,6 +52,31 @@ const App = () => (
             <Route path="/virtual-classroom" element={
               <ProtectedRoute>
                 <VirtualClassroomPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/virtual-classroom-grid" element={
+              <ProtectedRoute>
+                <VirtualClassroomGridPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/virtual-classroom-theater" element={
+              <ProtectedRoute>
+                <VirtualClassroomTheaterPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/virtual-classroom-whiteboard" element={
+              <ProtectedRoute>
+                <VirtualClassroomWhiteboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/virtual-classroom-breakout" element={
+              <ProtectedRoute>
+                <VirtualClassroomBreakoutPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/virtual-classroom-ai" element={
+              <ProtectedRoute>
+                <VirtualClassroomAIPage />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

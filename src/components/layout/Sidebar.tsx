@@ -7,7 +7,12 @@ import {
   Monitor, 
   Users,
   GraduationCap,
-  Settings
+  Settings,
+  Grid3X3,
+  Theater,
+  PenTool,
+  UserCheck,
+  Brain
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +36,31 @@ const navigation = [
     name: "Virtual Classroom",
     href: "/virtual-classroom",
     icon: Monitor,
+  },
+  {
+    name: "Grid Classroom",
+    href: "/virtual-classroom-grid",
+    icon: Grid3X3,
+  },
+  {
+    name: "Theater Classroom",
+    href: "/virtual-classroom-theater",
+    icon: Theater,
+  },
+  {
+    name: "Whiteboard Classroom",
+    href: "/virtual-classroom-whiteboard",
+    icon: PenTool,
+  },
+  {
+    name: "Breakout Classroom",
+    href: "/virtual-classroom-breakout",
+    icon: UserCheck,
+  },
+  {
+    name: "AI Smart Classroom",
+    href: "/virtual-classroom-ai",
+    icon: Brain,
   },
   {
     name: "Students",

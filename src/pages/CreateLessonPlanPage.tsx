@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -22,7 +21,9 @@ import {
   HelpCircle,
   Loader2,
   Download,
-  Monitor
+  Monitor,
+  Brain,
+  Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +43,7 @@ export const CreateLessonPlanPage = () => {
   const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [generatedLessonPlan, setGeneratedLessonPlan] = useState<string>("");
+  const [researchReferences, setResearchReferences] = useState<any[]>([]);
   const [lessonPlanId, setLessonPlanId] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -60,7 +62,7 @@ export const CreateLessonPlanPage = () => {
   const steps = [
     { number: 1, title: "Lesson Information", icon: BookOpen },
     { number: 2, title: "AI Questions", icon: HelpCircle },
-    { number: 3, title: "Generate Plan", icon: Wand2 },
+    { number: 3, title: "RAG-Enhanced Generation", icon: Brain },
     { number: 4, title: "Review & Save", icon: CheckCircle },
   ];
 
@@ -122,7 +124,7 @@ export const CreateLessonPlanPage = () => {
     }
     
     if (step === 2) {
-      // Generate lesson plan using AI
+      // Generate lesson plan using AI with RAG enhancement
       setIsGeneratingPlan(true);
       try {
         const { data, error } = await supabase.functions.invoke('generate-lesson-plan', {
@@ -136,6 +138,9 @@ export const CreateLessonPlanPage = () => {
 
         if (data?.lessonPlan) {
           setGeneratedLessonPlan(data.lessonPlan);
+          if (data?.researchReferences) {
+            setResearchReferences(data.researchReferences);
+          }
         }
       } catch (error: any) {
         console.error('Error generating lesson plan:', error);
@@ -219,6 +224,7 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
         ...formData,
         aiQuestions: questions.filter(q => q.answer?.trim()),
         generatedPlan: generatedLessonPlan,
+        researchReferences,
         generatedAt: new Date().toISOString(),
       };
 
@@ -227,6 +233,8 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
         questions.filter(q => q.answer?.trim()).map(q => 
           `Q: ${q.question}\nA: ${q.answer}\n`
         ).join('\n')
+      }\n\n---\n\nResearch References:\n${
+        researchReferences.map(ref => `- ${ref.topic} (${ref.source})`).join('\n')
       }`;
       
       const blob = new Blob([lessonPlanContent], { type: 'text/markdown' });
@@ -240,7 +248,7 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
         title: formData.title,
         subject: formData.subject,
         grade_level: formData.grade,
-        description: formData.objectives || "AI-generated lesson plan",
+        description: formData.objectives || "RAG-enhanced AI-generated lesson plan",
         duration: parseInt(formData.duration.replace(' min', '')) || undefined,
       });
 
@@ -248,7 +256,7 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
 
       toast({
         title: "Success!",
-        description: "Your lesson plan has been generated and saved to your library.",
+        description: "Your research-backed lesson plan has been generated and saved to your library.",
       });
 
     } catch (error: any) {
@@ -266,6 +274,8 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
       questions.filter(q => q.answer?.trim()).map(q => 
         `Q: ${q.question}\nA: ${q.answer}\n`
       ).join('\n')
+    }\n\n---\n\nResearch References:\n${
+      researchReferences.map(ref => `- ${ref.topic} (${ref.source})`).join('\n')
     }`;
     
     const blob = new Blob([lessonPlanContent], { type: 'text/markdown' });
@@ -280,7 +290,7 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
     
     toast({
       title: "Downloaded!",
-      description: "Your lesson plan has been downloaded to your device.",
+      description: "Your research-backed lesson plan has been downloaded to your device.",
     });
   };
 
@@ -313,11 +323,15 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
     <div className="p-8 max-w-4xl mx-auto space-y-8">
       <div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-          Create Lesson Plan
+          Create Research-Backed Lesson Plan
         </h1>
         <p className="text-muted-foreground mt-2">
-          Let AI help you create engaging and effective lesson plans
+          Let AI create highly constructive lesson plans using educational research and best practices
         </p>
+        <div className="flex items-center gap-2 mt-2">
+          <Brain className="h-4 w-4 text-purple-500" />
+          <span className="text-sm text-purple-600 font-medium">Enhanced with RAG (Retrieval-Augmented Generation)</span>
+        </div>
       </div>
 
       {/* Progress */}
@@ -506,44 +520,63 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
         {step === 3 && (
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-6">
-              <Wand2 className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-semibold">Generate Your Lesson Plan</h2>
+              <Brain className="h-6 w-6 text-primary" />
+              <h2 className="text-xl font-semibold">RAG-Enhanced Generation</h2>
             </div>
             
             {isGeneratingPlan ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center space-y-4">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                  <p className="text-muted-foreground">AI is creating your personalized lesson plan...</p>
+                  <div className="relative">
+                    <Brain className="h-12 w-12 mx-auto text-primary animate-pulse" />
+                    <Sparkles className="h-6 w-6 absolute -top-1 -right-1 text-yellow-500 animate-bounce" />
+                  </div>
+                  <p className="text-muted-foreground">AI is creating your research-backed lesson plan...</p>
+                  <p className="text-sm text-muted-foreground">Incorporating educational best practices and research findings</p>
                 </div>
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="bg-primary/10 border border-primary/20 rounded-lg p-6">
-                  <h3 className="font-semibold text-lg mb-4">Ready to Generate Your Personalized Lesson Plan</h3>
+                <div className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-200 rounded-lg p-6">
+                  <h3 className="font-semibold text-lg mb-4 text-purple-800">Ready to Generate Your Research-Backed Lesson Plan</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div className="space-y-2">
-                      <Badge variant="secondary" className="bg-secondary">
+                      <Badge variant="secondary" className="bg-white/80">
                         <BookOpen className="h-3 w-3 mr-1" />
                         {formData.subject} - {formData.grade}
                       </Badge>
-                      <Badge variant="secondary" className="bg-secondary">
+                      <Badge variant="secondary" className="bg-white/80">
                         <Clock className="h-3 w-3 mr-1" />
                         {formData.duration}
                       </Badge>
                     </div>
                     <div className="space-y-2">
-                      <Badge variant="secondary" className="bg-secondary">
+                      <Badge variant="secondary" className="bg-white/80">
                         <Users className="h-3 w-3 mr-1" />
                         {questions.filter(q => q.answer?.trim()).length} of {questions.length} questions answered
+                      </Badge>
+                      <Badge variant="secondary" className="bg-white/80">
+                        <Brain className="h-3 w-3 mr-1" />
+                        RAG-Enhanced with Research
                       </Badge>
                     </div>
                   </div>
                   
-                  <p className="text-sm text-muted-foreground mb-6">
+                  <div className="bg-white/60 rounded-lg p-4 mb-4">
+                    <h4 className="font-medium text-purple-800 mb-2">Educational Research Integration:</h4>
+                    <ul className="text-sm text-purple-700 space-y-1">
+                      <li>• Active learning and engagement strategies</li>
+                      <li>• Evidence-based assessment techniques</li>
+                      <li>• Differentiation and Universal Design for Learning</li>
+                      <li>• Subject-specific pedagogical approaches</li>
+                      <li>• Social-emotional learning integration</li>
+                    </ul>
+                  </div>
+                  
+                  <p className="text-sm text-purple-700">
                     Our AI will analyze your lesson information and answers to create a comprehensive, 
-                    personalized lesson plan.
+                    research-backed lesson plan incorporating the latest educational best practices.
                   </p>
                 </div>
               </div>
@@ -555,17 +588,32 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-6">
               <CheckCircle className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-semibold">Your Lesson Plan is Ready!</h2>
+              <h2 className="text-xl font-semibold">Your Research-Backed Lesson Plan is Ready!</h2>
             </div>
             
             <div className="space-y-6">
               <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                 <h3 className="font-semibold text-lg mb-4 text-green-800">
-                  🎉 Lesson Plan Generated Successfully!
+                  🎉 Research-Enhanced Lesson Plan Generated Successfully!
                 </h3>
                 <p className="text-green-700 mb-6">
-                  Your personalized lesson plan for "{formData.title}" has been created using AI based on your inputs and preferences.
+                  Your personalized lesson plan for "{formData.title}" has been created using AI and educational research, 
+                  incorporating evidence-based teaching strategies and best practices.
                 </p>
+
+                {researchReferences.length > 0 && (
+                  <div className="bg-white/60 rounded-lg p-4 mb-6">
+                    <h4 className="font-medium text-green-800 mb-2">Research References Incorporated:</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      {researchReferences.map((ref, index) => (
+                        <div key={index} className="text-sm text-green-700 flex items-center gap-2">
+                          <Sparkles className="h-3 w-3" />
+                          <span>{ref.topic}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <Button 
@@ -650,8 +698,8 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
                 </>
               ) : (step === 2 && isGeneratingPlan) ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Generating Plan...
+                  <Brain className="h-4 w-4 mr-2 animate-pulse" />
+                  Generating Research-Backed Plan...
                 </>
               ) : (
                 <>

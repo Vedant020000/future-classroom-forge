@@ -9,22 +9,36 @@ import {
   ArrowRight,
   Pencil,
   Type,
-  Image,
   Download,
   Upload,
   Undo,
   Redo,
-  Trash2
+  Trash2,
+  Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ExcalidrawToolbarProps {
   selectedTool: string;
   onToolChange: (tool: string) => void;
-  onAddBlock: (type: 'activity' | 'vocabulary' | 'question' | 'custom') => void;
+  onAddBlock: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  onClear: () => void;
+  onExport: () => void;
+  onImport: () => void;
 }
 
-export const ExcalidrawToolbar = ({ selectedTool, onToolChange, onAddBlock }: ExcalidrawToolbarProps) => {
+export const ExcalidrawToolbar = ({ 
+  selectedTool, 
+  onToolChange, 
+  onAddBlock,
+  onUndo,
+  onRedo,
+  onClear,
+  onExport,
+  onImport
+}: ExcalidrawToolbarProps) => {
   const tools = [
     { id: 'select', icon: MousePointer2, label: 'Select' },
     { id: 'rectangle', icon: Square, label: 'Rectangle' },
@@ -35,16 +49,9 @@ export const ExcalidrawToolbar = ({ selectedTool, onToolChange, onAddBlock }: Ex
     { id: 'text', icon: Type, label: 'Text' },
   ];
 
-  const blockTypes = [
-    { type: 'activity' as const, label: 'Activity', color: 'bg-orange-500' },
-    { type: 'vocabulary' as const, label: 'Vocab', color: 'bg-yellow-500' },
-    { type: 'question' as const, label: 'Question', color: 'bg-purple-500' },
-    { type: 'custom' as const, label: 'Custom', color: 'bg-gray-500' },
-  ];
-
   return (
     <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-30">
-      <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-2 flex items-center gap-1">
+      <div className="bg-gray-800 rounded-lg shadow-xl border border-gray-700 p-2 flex items-center gap-1">
         {/* Drawing Tools */}
         <div className="flex items-center gap-1">
           {tools.map((tool) => (
@@ -53,8 +60,8 @@ export const ExcalidrawToolbar = ({ selectedTool, onToolChange, onAddBlock }: Ex
               variant={selectedTool === tool.id ? "default" : "ghost"}
               size="sm"
               className={cn(
-                "h-8 w-8 p-0 text-gray-700",
-                selectedTool === tool.id && "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                "h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-700",
+                selectedTool === tool.id && "bg-blue-600 text-white hover:bg-blue-700"
               )}
               onClick={() => onToolChange(tool.id)}
               title={tool.label}
@@ -64,34 +71,29 @@ export const ExcalidrawToolbar = ({ selectedTool, onToolChange, onAddBlock }: Ex
           ))}
         </div>
 
-        <Separator orientation="vertical" className="h-6 mx-2" />
+        <Separator orientation="vertical" className="h-6 mx-2 bg-gray-600" />
 
-        {/* Lesson Blocks */}
-        <div className="flex items-center gap-1">
-          <span className="text-xs font-medium text-gray-600 mr-2">Blocks:</span>
-          {blockTypes.map(({ type, label, color }) => (
-            <Button
-              key={type}
-              variant="ghost"
-              size="sm"
-              onClick={() => onAddBlock(type)}
-              className="h-8 px-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center gap-1"
-              title={`Add ${label} Block`}
-            >
-              <div className={cn("w-2 h-2 rounded", color)} />
-              {label}
-            </Button>
-          ))}
-        </div>
+        {/* Add Block */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onAddBlock}
+          className="text-gray-300 hover:text-white hover:bg-gray-700 px-3"
+          title="Add Block"
+        >
+          <Plus className="h-4 w-4 mr-1" />
+          Add Block
+        </Button>
 
-        <Separator orientation="vertical" className="h-6 mx-2" />
+        <Separator orientation="vertical" className="h-6 mx-2 bg-gray-600" />
 
         {/* Actions */}
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-gray-700"
+            className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-700"
+            onClick={onUndo}
             title="Undo"
           >
             <Undo className="h-4 w-4" />
@@ -99,7 +101,8 @@ export const ExcalidrawToolbar = ({ selectedTool, onToolChange, onAddBlock }: Ex
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-gray-700"
+            className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-700"
+            onClick={onRedo}
             title="Redo"
           >
             <Redo className="h-4 w-4" />
@@ -107,21 +110,23 @@ export const ExcalidrawToolbar = ({ selectedTool, onToolChange, onAddBlock }: Ex
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-gray-700"
+            className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-700"
+            onClick={onClear}
             title="Clear All"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
         </div>
 
-        <Separator orientation="vertical" className="h-6 mx-2" />
+        <Separator orientation="vertical" className="h-6 mx-2 bg-gray-600" />
 
         {/* Export/Import */}
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-gray-700"
+            className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-700"
+            onClick={onExport}
             title="Export"
           >
             <Download className="h-4 w-4" />
@@ -129,7 +134,8 @@ export const ExcalidrawToolbar = ({ selectedTool, onToolChange, onAddBlock }: Ex
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 w-8 p-0 text-gray-700"
+            className="h-8 w-8 p-0 text-gray-300 hover:text-white hover:bg-gray-700"
+            onClick={onImport}
             title="Import"
           >
             <Upload className="h-4 w-4" />

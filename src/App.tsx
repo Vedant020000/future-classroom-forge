@@ -12,6 +12,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { LessonPlanPage } from "./pages/LessonPlanPage";
 import { CreateLessonPlanPage } from "./pages/CreateLessonPlanPage";
 import { LessonPlanWhiteboardPage } from "./pages/LessonPlanWhiteboardPage";
+import { ExcalidrawPage } from "./pages/ExcalidrawPage";
 import { StudentsPage } from "./pages/StudentsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AuthPage } from "./pages/AuthPage";
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="lesson-plans" element={<LessonPlanPage />} />
               <Route path="create-lesson-plan" element={<CreateLessonPlanPage />} />
+              <Route path="excalidraw" element={<ExcalidrawPage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>

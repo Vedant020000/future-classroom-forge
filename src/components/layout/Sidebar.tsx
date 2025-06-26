@@ -6,7 +6,8 @@ import {
   PlusCircle, 
   Users,
   GraduationCap,
-  Settings
+  Settings,
+  Palette
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,11 @@ const navigation = [
     name: "Visual Lesson Builder",
     href: "/create-lesson-plan",
     icon: PlusCircle,
+  },
+  {
+    name: "Excalidraw",
+    href: "/excalidraw",
+    icon: Palette,
   },
   {
     name: "Students",

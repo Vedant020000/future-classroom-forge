@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,12 +16,11 @@ import {
   ArrowRight,
   Sparkles
 } from "lucide-react";
-import { WhiteboardCanvas } from "@/components/whiteboard/WhiteboardCanvas";
+import { ExcalidrawCanvas } from "@/components/whiteboard/ExcalidrawCanvas";
 
 export const CreateLessonPlanPage = () => {
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
-  const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
     classroom: "",
@@ -51,52 +49,54 @@ export const CreateLessonPlanPage = () => {
     setTimeout(() => {
       setStep(2);
       setIsGenerating(false);
-    }, 2000);
+    }, 1500);
   };
 
   if (step === 2) {
-    return <WhiteboardCanvas lessonData={formData} />;
+    return <ExcalidrawCanvas lessonData={formData} />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-3">
-            <Palette className="h-8 w-8 text-purple-400" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <div className="p-3 bg-blue-600 rounded-xl">
+              <Palette className="h-8 w-8 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-gray-900">
               Visual Lesson Builder
             </h1>
           </div>
-          <p className="text-slate-300 text-lg">
-            Create engaging lesson plans with AI-powered visual blocks
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+            Create engaging lesson plans with AI-powered visual blocks. Start with foundation blocks, then build your perfect lesson.
           </p>
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="h-4 w-4 text-yellow-400" />
-            <span className="text-sm text-yellow-400">AI-Assisted Foundation Blocks</span>
+          <div className="flex items-center justify-center gap-2 bg-yellow-50 border border-yellow-200 rounded-lg px-4 py-2 max-w-sm mx-auto">
+            <Sparkles className="h-4 w-4 text-yellow-600" />
+            <span className="text-sm text-yellow-800 font-medium">AI-Assisted Foundation Blocks</span>
           </div>
         </div>
 
-        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm p-8">
+        <Card className="bg-white shadow-xl border-0 p-8">
           <div className="space-y-8">
             <div className="text-center">
-              <h2 className="text-2xl font-semibold text-white mb-2">Setup Your Lesson</h2>
-              <p className="text-slate-400">Tell us about your lesson and we'll create foundational blocks to get you started</p>
+              <h2 className="text-2xl font-semibold text-gray-900 mb-2">Setup Your Lesson</h2>
+              <p className="text-gray-600">Tell us about your lesson and we'll create foundational blocks to get you started</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="classroom" className="text-white flex items-center gap-2">
-                  <Users className="h-4 w-4" />
+                <Label htmlFor="classroom" className="text-gray-900 font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4 text-blue-600" />
                   Classroom *
                 </Label>
                 <Select value={formData.classroom} onValueChange={(value) => setFormData({...formData, classroom: value})}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectTrigger className="border-gray-200 focus:ring-2 focus:ring-blue-500">
                     <SelectValue placeholder="Select your classroom" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent>
                     {classrooms.map((classroom) => (
-                      <SelectItem key={classroom} value={classroom} className="text-white focus:bg-slate-700">
+                      <SelectItem key={classroom} value={classroom}>
                         {classroom}
                       </SelectItem>
                     ))}
@@ -105,22 +105,22 @@ export const CreateLessonPlanPage = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="topic" className="text-white flex items-center gap-2">
-                  <BookOpen className="h-4 w-4" />
+                <Label htmlFor="topic" className="text-gray-900 font-medium flex items-center gap-2">
+                  <BookOpen className="h-4 w-4 text-blue-600" />
                   Lesson Topic *
                 </Label>
                 <Input
                   id="topic"
-                  placeholder="e.g., Rosa Parks & Racism"
+                  placeholder="e.g., Rosa Parks & Civil Rights Movement"
                   value={formData.topic}
                   onChange={(e) => setFormData({...formData, topic: e.target.value})}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                  className="border-gray-200 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="date" className="text-white flex items-center gap-2">
-                  <Calendar className="h-4 w-4" />
+                <Label htmlFor="date" className="text-gray-900 font-medium flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-blue-600" />
                   Date *
                 </Label>
                 <Input
@@ -128,22 +128,22 @@ export const CreateLessonPlanPage = () => {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
-                  className="bg-slate-700 border-slate-600 text-white"
+                  className="border-gray-200 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="duration" className="text-white flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
+                <Label htmlFor="duration" className="text-gray-900 font-medium flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-blue-600" />
                   Duration *
                 </Label>
                 <Select value={formData.duration} onValueChange={(value) => setFormData({...formData, duration: value})}>
-                  <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                  <SelectTrigger className="border-gray-200 focus:ring-2 focus:ring-blue-500">
                     <SelectValue placeholder="Select duration" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-700">
+                  <SelectContent>
                     {durations.map((duration) => (
-                      <SelectItem key={duration} value={duration} className="text-white focus:bg-slate-700">
+                      <SelectItem key={duration} value={duration}>
                         {duration}
                       </SelectItem>
                     ))}
@@ -154,8 +154,8 @@ export const CreateLessonPlanPage = () => {
 
             <div className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="skillFocus" className="text-white flex items-center gap-2">
-                  <Target className="h-4 w-4" />
+                <Label htmlFor="skillFocus" className="text-gray-900 font-medium flex items-center gap-2">
+                  <Target className="h-4 w-4 text-blue-600" />
                   Skill Focus
                 </Label>
                 <Input
@@ -163,29 +163,29 @@ export const CreateLessonPlanPage = () => {
                   placeholder="e.g., Critical thinking, Reading comprehension, Historical analysis"
                   value={formData.skillFocus}
                   onChange={(e) => setFormData({...formData, skillFocus: e.target.value})}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400"
+                  className="border-gray-200 focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="learningGoals" className="text-white">Learning Goals</Label>
+                <Label htmlFor="learningGoals" className="text-gray-900 font-medium">Learning Goals</Label>
                 <Textarea
                   id="learningGoals"
                   placeholder="What should students learn or be able to do by the end of this lesson?"
                   value={formData.learningGoals}
                   onChange={(e) => setFormData({...formData, learningGoals: e.target.value})}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-24"
+                  className="border-gray-200 focus:ring-2 focus:ring-blue-500 min-h-24"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="studentDescription" className="text-white">Student Context (Optional)</Label>
+                <Label htmlFor="studentDescription" className="text-gray-900 font-medium">Student Context (Optional)</Label>
                 <Textarea
                   id="studentDescription"
                   placeholder="Tell us about your students - reading levels, classroom dynamics, special considerations..."
                   value={formData.studentDescription}
                   onChange={(e) => setFormData({...formData, studentDescription: e.target.value})}
-                  className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 min-h-24"
+                  className="border-gray-200 focus:ring-2 focus:ring-blue-500 min-h-24"
                 />
               </div>
             </div>
@@ -194,16 +194,17 @@ export const CreateLessonPlanPage = () => {
               <Button 
                 onClick={handleGeneratePlan}
                 disabled={!formData.classroom || !formData.topic || !formData.date || !formData.duration || isGenerating}
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-3 text-lg"
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg shadow-lg"
               >
                 {isGenerating ? (
                   <>
-                    <Sparkles className="h-5 w-5 mr-2 animate-spin" />
+                    <div className="w-5 h-5 mr-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                     Generating Foundation Blocks...
                   </>
                 ) : (
                   <>
-                    Generate Whiteboard Plan
+                    Generate Visual Lesson Plan
                     <ArrowRight className="h-5 w-5 ml-2" />
                   </>
                 )}

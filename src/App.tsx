@@ -10,6 +10,8 @@ import { AuthRoute } from "@/components/auth/AuthRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LessonPlanPage } from "./pages/LessonPlanPage";
+import { CreateLessonPlanPage } from "./pages/CreateLessonPlanPage";
+import { VirtualClassroomPage } from "./pages/VirtualClassroomPage";
 import { StudentsPage } from "./pages/StudentsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AuthPage } from "./pages/AuthPage";
@@ -38,9 +40,15 @@ const App = () => (
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="lesson-plans" element={<LessonPlanPage />} />
+              <Route path="create-lesson-plan" element={<CreateLessonPlanPage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
+            <Route path="/virtual-classroom" element={
+              <ProtectedRoute>
+                <VirtualClassroomPage />
+              </ProtectedRoute>
+            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

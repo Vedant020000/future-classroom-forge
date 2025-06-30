@@ -3,6 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   BookOpen, 
+  PlusCircle, 
+  Monitor, 
   Users,
   GraduationCap,
   Settings
@@ -19,6 +21,16 @@ const navigation = [
     name: "Lesson Plans",
     href: "/lesson-plans",
     icon: BookOpen,
+  },
+  {
+    name: "Create Lesson Plan",
+    href: "/create-lesson-plan",
+    icon: PlusCircle,
+  },
+  {
+    name: "Virtual Classroom",
+    href: "/virtual-classroom",
+    icon: Monitor,
   },
   {
     name: "Students",

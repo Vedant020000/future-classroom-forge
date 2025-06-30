@@ -2,164 +2,14 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.21.0";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Educational knowledge base for RAG
-interface EducationalKnowledge {
-  id: string;
-  category: string;
-  topic: string;
-  content: string;
-  tags: string[];
-  source: string;
-  gradeLevel?: string;
-  subject?: string;
-}
-
-const educationalKnowledgeBase: EducationalKnowledge[] = [
-  {
-    id: "eng-001",
-    category: "Engagement",
-    topic: "Active Learning Techniques",
-    content: "Research shows that students retain 90% of what they teach others versus 10% of what they read. Implement peer teaching, think-pair-share, and jigsaw activities. Use the 10-2 rule: for every 10 minutes of instruction, provide 2 minutes of processing time.",
-    tags: ["active-learning", "retention", "peer-teaching"],
-    source: "Educational Psychology Research",
-    gradeLevel: "all",
-    subject: "all"
-  },
-  {
-    id: "eng-002",
-    category: "Engagement",
-    topic: "Questioning Strategies",
-    content: "Use Bloom's Taxonomy to create higher-order thinking questions. Start with knowledge and comprehension questions, then move to analysis, synthesis, and evaluation. Wait at least 3-5 seconds after asking a question before calling on students.",
-    tags: ["questioning", "blooms-taxonomy", "critical-thinking"],
-    source: "Bloom's Educational Objectives",
-    gradeLevel: "all",
-    subject: "all"
-  },
-  {
-    id: "ass-001",
-    category: "Assessment",
-    topic: "Formative Assessment Techniques",
-    content: "Use exit tickets, thumbs up/down, one minute papers, and digital polling. Implement 'fist to five' confidence checks. Formative assessment should happen every 10-15 minutes during instruction to gauge understanding.",
-    tags: ["formative-assessment", "real-time-feedback", "understanding-checks"],
-    source: "Assessment for Learning Research",
-    gradeLevel: "all",
-    subject: "all"
-  },
-  {
-    id: "diff-001",
-    category: "Differentiation",
-    topic: "Multiple Learning Styles",
-    content: "Address visual, auditory, kinesthetic, and reading/writing learners. Provide content in multiple formats: infographics, videos, hands-on activities, and text. Use the VARK model to ensure all learning preferences are met.",
-    tags: ["learning-styles", "VARK", "multiple-modalities"],
-    source: "Learning Styles Research",
-    gradeLevel: "all",
-    subject: "all"
-  },
-  {
-    id: "math-001",
-    category: "Subject-Specific",
-    topic: "Mathematical Problem Solving",
-    content: "Use the 5 Practices for Orchestrating Productive Mathematical Discourse: anticipating, monitoring, selecting, sequencing, and connecting student responses. Emphasize mathematical reasoning and communication.",
-    tags: ["mathematics", "problem-solving", "discourse"],
-    source: "Mathematical Teaching Practices",
-    gradeLevel: "all",
-    subject: "Mathematics"
-  },
-  {
-    id: "sci-001",
-    category: "Subject-Specific",
-    topic: "Scientific Inquiry",
-    content: "Implement the 5E model: Engage, Explore, Explain, Elaborate, Evaluate. Students should formulate hypotheses, design experiments, collect data, and draw conclusions. Emphasize scientific practices over content memorization.",
-    tags: ["science", "inquiry", "5E-model", "scientific-method"],
-    source: "Science Education Research",
-    gradeLevel: "all",
-    subject: "Science"
-  },
-  {
-    id: "eng-004",
-    category: "Subject-Specific",
-    topic: "Reading Comprehension Strategies",
-    content: "Teach explicit comprehension strategies: predicting, questioning, clarifying, summarizing. Use think-alouds to model metacognitive processes. Implement guided reading with leveled texts.",
-    tags: ["reading", "comprehension", "metacognition", "guided-reading"],
-    source: "Reading Research",
-    gradeLevel: "elementary-middle",
-    subject: "English"
-  },
-  {
-    id: "udl-001",
-    category: "Inclusion",
-    topic: "Universal Design for Learning",
-    content: "Provide multiple means of representation (visual, auditory, text), engagement (choice, relevance, challenge), and expression (writing, speaking, creating). Remove barriers to learning for all students.",
-    tags: ["UDL", "accessibility", "multiple-means", "inclusion"],
-    source: "UDL Guidelines",
-    gradeLevel: "all",
-    subject: "all"
-  }
-];
-
-function searchRelevantKnowledge(query: string, subject?: string, gradeLevel?: string, limit: number = 3): EducationalKnowledge[] {
-  const queryLower = query.toLowerCase();
-  const queryWords = queryLower.split(/\s+/);
-
-  const scored = educationalKnowledgeBase.map(item => {
-    let score = 0;
-
-    // Content relevance
-    const contentLower = item.content.toLowerCase();
-    queryWords.forEach(word => {
-      if (contentLower.includes(word)) score += 2;
-    });
-
-    // Tag relevance
-    item.tags.forEach(tag => {
-      queryWords.forEach(word => {
-        if (tag.includes(word)) score += 3;
-      });
-    });
-
-    // Topic relevance
-    const topicLower = item.topic.toLowerCase();
-    queryWords.forEach(word => {
-      if (topicLower.includes(word)) score += 4;
-    });
-
-    // Subject match
-    if (subject && (item.subject === subject || item.subject === 'all')) {
-      score += 2;
-    }
-
-    // Grade level match  
-    if (gradeLevel && (item.gradeLevel === gradeLevel || item.gradeLevel === 'all')) {
-      score += 1;
-    }
-
-    return { ...item, score };
-  });
-
-  return scored
-    .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
-}
-
-function getKnowledgeByCategory(category: string, subject?: string, gradeLevel?: string): EducationalKnowledge[] {
-  return educationalKnowledgeBase.filter(item => {
-    const categoryMatch = item.category.toLowerCase() === category.toLowerCase();
-    const subjectMatch = !subject || item.subject === subject || item.subject === 'all';
-    const gradeMatch = !gradeLevel || item.gradeLevel === gradeLevel || item.gradeLevel === 'all';
-    
-    return categoryMatch && subjectMatch && gradeMatch;
-  });
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -174,104 +24,160 @@ serve(async (req) => {
 
     const genAI = new GoogleGenerativeAI(googleAIApiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // RAG: Retrieve relevant educational knowledge
-    const relevantKnowledge: EducationalKnowledge[] = [];
+    console.log('Searching PDF knowledge base for relevant educational content...');
+
+    // Create targeted search queries for different aspects of lesson planning
+    const searchQueries = [
+      `${lessonData.subject} ${lessonData.grade} teaching methods engagement activities`,
+      `${lessonData.subject} assessment strategies formative summative evaluation`,
+      `differentiation learning styles multiple intelligences ${lessonData.grade}`,
+      `${lessonData.subject} pedagogy best practices research evidence`,
+      `classroom management techniques ${lessonData.grade} behavior strategies`,
+      `${lessonData.title} ${lessonData.subject} lesson activities examples`
+    ];
+
+    let relevantKnowledge: any[] = [];
     
-    // Search for engagement strategies
-    relevantKnowledge.push(...searchRelevantKnowledge(`engagement activities ${lessonData.subject}`, lessonData.subject, lessonData.grade, 2));
-    
-    // Search for assessment strategies
-    relevantKnowledge.push(...searchRelevantKnowledge(`assessment ${lessonData.subject}`, lessonData.subject, lessonData.grade, 2));
-    
-    // Search for differentiation strategies
-    relevantKnowledge.push(...searchRelevantKnowledge(`differentiation learning styles`, lessonData.subject, lessonData.grade, 1));
-    
-    // Get subject-specific strategies
-    const subjectStrategies = getKnowledgeByCategory('Subject-Specific', lessonData.subject, lessonData.grade);
-    if (subjectStrategies.length > 0) {
-      relevantKnowledge.push(subjectStrategies[0]);
+    // Search PDF knowledge base for each query
+    for (const query of searchQueries) {
+      try {
+        const { data: searchResults, error } = await supabase.functions.invoke('search-pdf-knowledge', {
+          body: { 
+            query, 
+            subject: lessonData.subject, 
+            gradeLevel: lessonData.grade,
+            limit: 3
+          }
+        });
+        
+        if (error) {
+          console.error(`Search error for query "${query}":`, error);
+          continue;
+        }
+        
+        if (searchResults?.results) {
+          relevantKnowledge.push(...searchResults.results);
+        }
+      } catch (searchError) {
+        console.error(`Search error for query "${query}":`, searchError);
+      }
     }
 
-    // Get inclusion strategies
-    const inclusionStrategies = getKnowledgeByCategory('Inclusion', lessonData.subject, lessonData.grade);
-    if (inclusionStrategies.length > 0) {
-      relevantKnowledge.push(inclusionStrategies[0]);
-    }
+    // Remove duplicates and get top results
+    const uniqueKnowledge = relevantKnowledge
+      .filter((item, index, arr) => arr.findIndex(i => i.id === item.id) === index)
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+      .slice(0, 10);
 
-    // Format research-based recommendations
-    const researchRecommendations = relevantKnowledge.map(knowledge => 
-      `**${knowledge.topic}** (${knowledge.source}):\n${knowledge.content}`
-    ).join('\n\n');
+    console.log(`Found ${uniqueKnowledge.length} relevant knowledge chunks from uploaded PDFs`);
 
-    // Create the enhanced prompt with RAG content
-    const prompt = `You are an expert educator and lesson plan creator with access to cutting-edge educational research. Create a comprehensive, research-backed lesson plan based on the following information and educational best practices:
+    // Format PDF-based research content
+    const pdfResearchContent = uniqueKnowledge.length > 0 
+      ? uniqueKnowledge.map(knowledge => 
+          `**Source: ${knowledge.source}** (Relevance: ${knowledge.relevanceScore})\n${knowledge.content}`
+        ).join('\n\n---\n\n')
+      : '';
 
-LESSON DETAILS:
+    // Create enhanced prompt with PDF research integration
+    const prompt = `You are an expert educator creating a research-backed lesson plan. Use the educational research and best practices from the uploaded documents to create a comprehensive, evidence-based lesson plan.
+
+LESSON REQUIREMENTS:
 - Title: ${lessonData.title}
 - Subject: ${lessonData.subject}
 - Grade Level: ${lessonData.grade}
 - Duration: ${lessonData.duration}
-- Learning Objectives: ${lessonData.objectives || 'Not specified'}
-- Content Outline: ${lessonData.outline || 'Not specified'}
-- Student Considerations: ${lessonData.studentNeeds || 'Not specified'}
+- Learning Objectives: ${lessonData.objectives || 'To be developed based on content'}
+- Content Outline: ${lessonData.outline || 'To be structured based on best practices'}
+- Student Considerations: ${lessonData.studentNeeds || 'Address diverse learning needs'}
 
-TEACHER'S RESPONSES TO AI QUESTIONS:
-${aiQuestions.map((q: any) => `Q: ${q.question}\nA: ${q.answer}`).join('\n\n')}
+TEACHER INPUT FROM AI QUESTIONS:
+${aiQuestions.map((q: any) => `Q: ${q.question}\nA: ${q.answer || 'Not answered'}`).join('\n\n')}
 
-RESEARCH-BASED EDUCATIONAL STRATEGIES TO INCORPORATE:
-${researchRecommendations}
+RELEVANT EDUCATIONAL RESEARCH FROM UPLOADED DOCUMENTS:
+${pdfResearchContent || 'No specific PDF research found - using general educational best practices'}
 
-Please create a highly detailed, research-backed lesson plan that incorporates these evidence-based strategies. The lesson plan should include:
+${pdfResearchContent ? 
+`INSTRUCTIONS: Create a detailed lesson plan that directly incorporates and references the research findings above. Cite specific strategies, methods, and evidence from the uploaded documents.` 
+: 
+`INSTRUCTIONS: Create a research-based lesson plan using established educational principles including active learning, formative assessment, differentiation, and Universal Design for Learning (UDL).`}
 
-1. **Clear Learning Objectives** (aligned with standards and measurable)
-2. **Materials and Technology** (specific tools and resources)
-3. **Detailed Lesson Structure** with time allocations including:
-   - Hook/Engagement Activity (research-based)
-   - Direct Instruction with active learning elements
-   - Guided Practice with formative assessment
-   - Independent Practice with differentiation
-   - Closure with reflection
-4. **Assessment Strategies** (both formative and summative, research-backed)
-5. **Differentiation Strategies** (for diverse learners, based on UDL principles)
-6. **Extension Activities** (for advanced learners)
-7. **Intervention Strategies** (for struggling learners)
-8. **Cross-Curricular Connections**
-9. **Real-World Applications**
-10. **Reflection Questions** (for both students and teacher)
-11. **Research Citations** (reference the educational strategies used)
+Create a comprehensive lesson plan with these sections:
 
-IMPORTANT GUIDELINES:
-- Incorporate active learning techniques with the 10-2 rule
-- Use Bloom's Taxonomy for questioning strategies
-- Include multiple means of representation, engagement, and expression (UDL)
-- Implement formative assessment every 10-15 minutes
-- Address different learning styles (visual, auditory, kinesthetic, reading/writing)
-- Integrate technology meaningfully using the SAMR model
-- Include social-emotional learning elements
-- Ensure cultural responsiveness and inclusivity
-- Use research-backed time management and pacing
-- Incorporate student choice and voice
+## ${lessonData.title}
+**Subject:** ${lessonData.subject} | **Grade:** ${lessonData.grade} | **Duration:** ${lessonData.duration}
 
-Format the lesson plan in clear markdown with appropriate headings and sections. Make it practical, engaging, research-backed, and ready to use in the classroom. Reference specific educational research and frameworks throughout.
+### Learning Objectives
+- [Create 3-5 measurable objectives aligned with standards]
 
-The lesson plan should be professional, highly detailed, and demonstrate deep pedagogical knowledge backed by educational research.`;
+### Materials & Technology
+- [List specific resources needed]
 
-    console.log('Generating enhanced lesson plan with RAG system...');
+### Lesson Structure
+
+#### Opening (X minutes)
+- Hook/Engagement Activity
+- Learning objectives introduction
+- Connection to prior knowledge
+
+#### Main Instruction (X minutes)
+- Direct instruction with active learning elements
+- Guided practice opportunities
+- Formative assessment checkpoints
+
+#### Independent Practice (X minutes)
+- Differentiated activities
+- Student choice elements
+- Scaffolding for different ability levels
+
+#### Closure (X minutes)
+- Summary and reflection
+- Assessment of learning
+- Preview of next lesson
+
+### Assessment Strategies
+- Formative assessment techniques
+- Summative assessment plan
+- Success criteria
+
+### Differentiation & Accommodations
+- For advanced learners
+- For struggling learners
+- For English language learners
+- For students with disabilities
+
+### Extension Activities
+- [Additional challenges and enrichment]
+
+### Cross-Curricular Connections
+- [Links to other subjects]
+
+### Research Integration
+- [Reference specific strategies from the uploaded research]
+
+Make this lesson plan practical, detailed, and immediately usable in the classroom. Include specific timing, clear instructions, and research citations where applicable.`;
+
+    console.log('Generating research-enhanced lesson plan...');
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const lessonPlan = response.text();
 
-    console.log('Generated research-backed lesson plan successfully');
+    console.log('Successfully generated PDF research-enhanced lesson plan');
 
     return new Response(JSON.stringify({ 
       lessonPlan,
-      researchReferences: relevantKnowledge.map(k => ({
-        topic: k.topic,
+      researchReferences: uniqueKnowledge.map(k => ({
         source: k.source,
-        category: k.category
-      }))
+        relevanceScore: k.relevanceScore,
+        topic: k.content.substring(0, 100) + '...'
+      })),
+      knowledgeChunksUsed: uniqueKnowledge.length,
+      hasPDFResearch: uniqueKnowledge.length > 0
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
@@ -280,7 +186,7 @@ The lesson plan should be professional, highly detailed, and demonstrate deep pe
     console.error('Error in generate-lesson-plan function:', error);
     return new Response(JSON.stringify({ 
       error: error.message,
-      details: 'Failed to generate lesson plan'
+      details: 'Failed to generate lesson plan with PDF research'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

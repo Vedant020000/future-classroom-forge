@@ -23,11 +23,14 @@ import {
   Download,
   Monitor,
   Brain,
-  Sparkles
+  Sparkles,
+  Upload,
+  FileText
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useLessonPlans } from "@/hooks/useLessonPlans";
+import { PDFUploadDialog } from "@/components/pdf-knowledge/PDFUploadDialog";
 
 interface Question {
   id: number;
@@ -45,6 +48,7 @@ export const CreateLessonPlanPage = () => {
   const [generatedLessonPlan, setGeneratedLessonPlan] = useState<string>("");
   const [researchReferences, setResearchReferences] = useState<any[]>([]);
   const [lessonPlanId, setLessonPlanId] = useState<string>("");
+  const [showPDFUpload, setShowPDFUpload] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { uploadLessonPlan } = useLessonPlans();
@@ -322,15 +326,27 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8">
       <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-          Create Research-Backed Lesson Plan
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Let AI create highly constructive lesson plans using educational research and best practices
-        </p>
-        <div className="flex items-center gap-2 mt-2">
-          <Brain className="h-4 w-4 text-purple-500" />
-          <span className="text-sm text-purple-600 font-medium">Enhanced with RAG (Retrieval-Augmented Generation)</span>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+              Create Research-Backed Lesson Plan
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Let AI create highly constructive lesson plans using educational research and best practices
+            </p>
+            <div className="flex items-center gap-2 mt-2">
+              <Brain className="h-4 w-4 text-purple-500" />
+              <span className="text-sm text-purple-600 font-medium">Enhanced with PDF-based Research (RAG)</span>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowPDFUpload(true)}
+            className="border-purple-200 text-purple-700 hover:bg-purple-50"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload Research PDFs
+          </Button>
         </div>
       </div>
 
@@ -521,7 +537,7 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-6">
               <Brain className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-semibold">RAG-Enhanced Generation</h2>
+              <h2 className="text-xl font-semibold">PDF Research-Enhanced Generation</h2>
             </div>
             
             {isGeneratingPlan ? (
@@ -531,14 +547,14 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
                     <Brain className="h-12 w-12 mx-auto text-primary animate-pulse" />
                     <Sparkles className="h-6 w-6 absolute -top-1 -right-1 text-yellow-500 animate-bounce" />
                   </div>
-                  <p className="text-muted-foreground">AI is creating your research-backed lesson plan...</p>
-                  <p className="text-sm text-muted-foreground">Incorporating educational best practices and research findings</p>
+                  <p className="text-muted-foreground">AI is searching your uploaded PDFs and creating a research-backed lesson plan...</p>
+                  <p className="text-sm text-muted-foreground">Incorporating educational research from your knowledge base</p>
                 </div>
               </div>
             ) : (
               <div className="space-y-6">
                 <div className="bg-gradient-to-r from-purple-100 to-blue-100 border border-purple-200 rounded-lg p-6">
-                  <h3 className="font-semibold text-lg mb-4 text-purple-800">Ready to Generate Your Research-Backed Lesson Plan</h3>
+                  <h3 className="font-semibold text-lg mb-4 text-purple-800">Ready to Generate Your PDF Research-Enhanced Lesson Plan</h3>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                     <div className="space-y-2">
@@ -564,19 +580,19 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
                   </div>
                   
                   <div className="bg-white/60 rounded-lg p-4 mb-4">
-                    <h4 className="font-medium text-purple-800 mb-2">Educational Research Integration:</h4>
+                    <h4 className="font-medium text-purple-800 mb-2">PDF Research Integration:</h4>
                     <ul className="text-sm text-purple-700 space-y-1">
-                      <li>• Active learning and engagement strategies</li>
-                      <li>• Evidence-based assessment techniques</li>
-                      <li>• Differentiation and Universal Design for Learning</li>
-                      <li>• Subject-specific pedagogical approaches</li>
-                      <li>• Social-emotional learning integration</li>
+                      <li>• Search through your uploaded educational PDFs</li>
+                      <li>• Extract relevant research findings and methodologies</li>
+                      <li>• Apply evidence-based teaching strategies</li>
+                      <li>• Reference specific research sources in the lesson plan</li>
+                      <li>• Customize approaches based on your knowledge base</li>
                     </ul>
                   </div>
                   
                   <p className="text-sm text-purple-700">
-                    Our AI will analyze your lesson information and answers to create a comprehensive, 
-                    research-backed lesson plan incorporating the latest educational best practices.
+                    Our AI will analyze your lesson information, teacher responses, and uploaded research PDFs to create a 
+                    comprehensive, evidence-based lesson plan with direct citations from your knowledge base.
                   </p>
                 </div>
               </div>
@@ -588,27 +604,32 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-6">
               <CheckCircle className="h-6 w-6 text-primary" />
-              <h2 className="text-xl font-semibold">Your Research-Backed Lesson Plan is Ready!</h2>
+              <h2 className="text-xl font-semibold">Your PDF Research-Enhanced Lesson Plan is Ready!</h2>
             </div>
             
             <div className="space-y-6">
               <div className="bg-green-50 border border-green-200 rounded-lg p-6">
                 <h3 className="font-semibold text-lg mb-4 text-green-800">
-                  🎉 Research-Enhanced Lesson Plan Generated Successfully!
+                  🎉 PDF Research-Enhanced Lesson Plan Generated Successfully!
                 </h3>
                 <p className="text-green-700 mb-6">
-                  Your personalized lesson plan for "{formData.title}" has been created using AI and educational research, 
-                  incorporating evidence-based teaching strategies and best practices.
+                  Your personalized lesson plan for "{formData.title}" has been created using AI and your uploaded 
+                  educational research PDFs, incorporating evidence-based teaching strategies and best practices.
                 </p>
 
                 {researchReferences.length > 0 && (
                   <div className="bg-white/60 rounded-lg p-4 mb-6">
-                    <h4 className="font-medium text-green-800 mb-2">Research References Incorporated:</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <h4 className="font-medium text-green-800 mb-2">PDF Research Sources Used:</h4>
+                    <div className="space-y-2">
                       {researchReferences.map((ref, index) => (
-                        <div key={index} className="text-sm text-green-700 flex items-center gap-2">
-                          <Sparkles className="h-3 w-3" />
-                          <span>{ref.topic}</span>
+                        <div key={index} className="text-sm text-green-700 flex items-start gap-2">
+                          <FileText className="h-3 w-3 mt-1" />
+                          <div>
+                            <span className="font-medium">{ref.source}</span>
+                            <span className="text-green-600"> (Relevance: {ref.relevanceScore})</span>
+                            <br />
+                            <span className="text-xs">{ref.topic}</span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -720,6 +741,18 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
           )}
         </div>
       </Card>
+
+      {/* PDF Upload Dialog */}
+      <PDFUploadDialog 
+        open={showPDFUpload} 
+        onOpenChange={setShowPDFUpload}
+        onUploadComplete={() => {
+          toast({
+            title: "Knowledge Base Updated",
+            description: "Your research PDFs will now be used to enhance lesson plan generation.",
+          });
+        }}
+      />
     </div>
   );
 };

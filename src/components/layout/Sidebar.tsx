@@ -3,11 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, 
   BookOpen, 
-  PlusCircle, 
   Users,
   GraduationCap,
-  Settings,
-  Palette
+  Settings
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,16 +19,6 @@ const navigation = [
     name: "Lesson Plans",
     href: "/lesson-plans",
     icon: BookOpen,
-  },
-  {
-    name: "Visual Lesson Builder",
-    href: "/create-lesson-plan",
-    icon: PlusCircle,
-  },
-  {
-    name: "Excalidraw",
-    href: "/excalidraw",
-    icon: Palette,
   },
   {
     name: "Students",

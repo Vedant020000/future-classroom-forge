@@ -10,9 +10,6 @@ import { AuthRoute } from "@/components/auth/AuthRoute";
 import { MainLayout } from "./components/layout/MainLayout";
 import { DashboardPage } from "./pages/DashboardPage";
 import { LessonPlanPage } from "./pages/LessonPlanPage";
-import { CreateLessonPlanPage } from "./pages/CreateLessonPlanPage";
-import { LessonPlanWhiteboardPage } from "./pages/LessonPlanWhiteboardPage";
-import { ExcalidrawPage } from "./pages/ExcalidrawPage";
 import { StudentsPage } from "./pages/StudentsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AuthPage } from "./pages/AuthPage";
@@ -41,17 +38,9 @@ const App = () => (
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<DashboardPage />} />
               <Route path="lesson-plans" element={<LessonPlanPage />} />
-              <Route path="create-lesson-plan" element={<CreateLessonPlanPage />} />
-              <Route path="excalidraw" element={<ExcalidrawPage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="settings" element={<SettingsPage />} />
             </Route>
-            {/* Whiteboard routes - full screen without sidebar */}
-            <Route path="/lesson-plan/:id/edit" element={
-              <ProtectedRoute>
-                <LessonPlanWhiteboardPage />
-              </ProtectedRoute>
-            } />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

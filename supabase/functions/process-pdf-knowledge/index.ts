@@ -34,8 +34,8 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Split PDF content into chunks
-    const chunks = splitIntoChunks(pdfContent, filename, metadata);
+    // Split PDF content into chunks with embeddings
+    const chunks = await splitIntoChunks(pdfContent, filename, metadata);
     
     // Store chunks in database
     const { data, error } = await supabase
@@ -68,55 +68,116 @@ serve(async (req) => {
   }
 });
 
-function splitIntoChunks(content: string, source: string, metadata: any): PDFKnowledgeChunk[] {
-  // Split by paragraphs and filter out short chunks
-  const paragraphs = content.split(/\n\s*\n/).filter(p => p.trim().length > 100);
-  const chunks: PDFKnowledgeChunk[] = [];
+async function splitIntoChunks(content: string, source: string, metadata: any): Promise<PDFKnowledgeChunk[]> {
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
   
-  paragraphs.forEach((paragraph, index) => {
-    // Further split very long paragraphs
-    const sentences = paragraph.split(/[.!?]+/).filter(s => s.trim().length > 20);
+  // Clean and preprocess content
+  const cleanedContent = content
+    .replace(/\n\s*\n+/g, '\n\n') // Normalize line breaks
+    .replace(/[\r\f\v]/g, '') // Remove other whitespace chars
+    .replace(/^\s*---.*?---\s*/gm, '') // Remove page markers
+    .trim();
+
+  // Split into paragraphs and filter meaningful content
+  const paragraphs = cleanedContent
+    .split(/\n\s*\n/)
+    .filter(p => {
+      const trimmed = p.trim();
+      return trimmed.length > 100 && 
+             !/^(page \d+|chapter \d+|\d+)$/i.test(trimmed) &&
+             !/^(table of contents|index|bibliography|references)$/i.test(trimmed);
+    });
+
+  const chunks: PDFKnowledgeChunk[] = [];
+  const textsForEmbedding: string[] = [];
+  
+  paragraphs.forEach((paragraph, paragraphIndex) => {
+    // Split by sentences more intelligently
+    const sentences = paragraph
+      .split(/(?<=[.!?])\s+(?=[A-Z])/)
+      .filter(s => s.trim().length > 30);
+    
     let currentChunk = '';
     let chunkIndex = 0;
     
-    sentences.forEach(sentence => {
-      if (currentChunk.length + sentence.length > 1000 && currentChunk.length > 0) {
-        chunks.push({
-          id: `${source.replace(/\.[^/.]+$/, '')}-chunk-${index}-${chunkIndex}`,
-          content: currentChunk.trim(),
-          metadata: {
-            source,
-            page: Math.floor(index / 3) + 1,
-            category: metadata.category || 'general',
-            subject: metadata.subject || 'all',
-            gradeLevel: metadata.gradeLevel || 'all',
-            uploadedAt: metadata.uploadedAt,
-            fileSize: metadata.fileSize
-          }
-        });
-        currentChunk = sentence.trim();
-        chunkIndex++;
-      } else {
-        currentChunk += (currentChunk ? '. ' : '') + sentence.trim();
-      }
-    });
-    
-    if (currentChunk.trim().length > 50) {
-      chunks.push({
-        id: `${source.replace(/\.[^/.]+$/, '')}-chunk-${index}-${chunkIndex}`,
-        content: currentChunk.trim(),
+    const processChunk = (chunkContent: string) => {
+      if (chunkContent.trim().length < 100) return;
+      
+      const chunkId = `${source.replace(/\.[^/.]+$/, '')}-${paragraphIndex}-${chunkIndex}`;
+      const chunk: PDFKnowledgeChunk = {
+        id: chunkId,
+        content: chunkContent.trim(),
         metadata: {
           source,
-          page: Math.floor(index / 3) + 1,
+          page: Math.floor(paragraphIndex / 5) + 1,
           category: metadata.category || 'general',
           subject: metadata.subject || 'all',
           gradeLevel: metadata.gradeLevel || 'all',
           uploadedAt: metadata.uploadedAt,
-          fileSize: metadata.fileSize
+          fileSize: metadata.fileSize,
+          chunkIndex: chunks.length
         }
-      });
+      };
+      
+      chunks.push(chunk);
+      textsForEmbedding.push(chunkContent.trim());
+    };
+
+    sentences.forEach(sentence => {
+      const sentenceLength = sentence.length;
+      
+      // If adding this sentence would exceed chunk size and we have content
+      if (currentChunk.length + sentenceLength > 800 && currentChunk.length > 200) {
+        processChunk(currentChunk);
+        currentChunk = sentence.trim();
+        chunkIndex++;
+      } else {
+        currentChunk += (currentChunk ? ' ' : '') + sentence.trim();
+      }
+    });
+    
+    // Process the last chunk if it has meaningful content
+    if (currentChunk.trim().length > 100) {
+      processChunk(currentChunk);
     }
   });
+
+  // Generate embeddings for all chunks
+  if (textsForEmbedding.length > 0) {
+    try {
+      console.log(`Generating embeddings for ${textsForEmbedding.length} chunks...`);
+      
+      const embeddingResponse = await fetch(`${supabaseUrl}/functions/v1/generate-embeddings`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          texts: textsForEmbedding,
+          model: 'text-embedding-3-small'
+        }),
+      });
+
+      if (embeddingResponse.ok) {
+        const embeddingData = await embeddingResponse.json();
+        
+        // Add embeddings to chunks
+        embeddingData.embeddings.forEach((embeddingItem: any, index: number) => {
+          if (chunks[index]) {
+            chunks[index].metadata.embedding = embeddingItem.embedding;
+          }
+        });
+        
+        console.log(`Successfully generated embeddings for ${embeddingData.embeddings.length} chunks`);
+      } else {
+        console.warn('Failed to generate embeddings, proceeding without them');
+      }
+    } catch (error) {
+      console.warn('Error generating embeddings:', error);
+    }
+  }
   
   return chunks;
 }

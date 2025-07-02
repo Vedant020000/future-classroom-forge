@@ -57,28 +57,50 @@ export const PDFUploadDialog = ({ open, onOpenChange, onUploadComplete }: PDFUpl
   };
 
   const extractTextFromPDF = async (file: File): Promise<string> => {
-    // Simple text extraction - in production you'd use a proper PDF parser
-    // For now, we'll simulate extraction by reading file info
-    const reader = new FileReader();
+    const pdfjsLib = await import('pdfjs-dist');
+    
+    // Set worker source
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+    
     return new Promise((resolve, reject) => {
-      reader.onload = () => {
-        // This would be replaced with actual PDF text extraction
-        resolve(`Educational content from ${file.name}. 
-
-This represents extracted text content from the PDF document. In a production system, this would contain the actual parsed text from the PDF using libraries like PDF.js or similar.
-
-Key educational concepts and strategies would be extracted here, including:
-- Teaching methodologies and approaches
-- Assessment techniques and rubrics  
-- Classroom management strategies
-- Subject-specific pedagogical content
-- Learning theories and research findings
-- Student engagement techniques
-- Differentiation strategies
-- Technology integration methods
-
-The content would maintain its original structure and context to preserve the educational value and research citations contained within the document.`);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const arrayBuffer = reader.result as ArrayBuffer;
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          
+          let fullText = '';
+          
+          // Extract text from each page
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            
+            // Combine text items with proper spacing
+            const pageText = textContent.items
+              .filter((item: any) => item.str && item.str.trim())
+              .map((item: any) => item.str)
+              .join(' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+            
+            if (pageText) {
+              fullText += `\n\n--- Page ${pageNum} ---\n\n${pageText}`;
+            }
+          }
+          
+          if (!fullText.trim()) {
+            reject(new Error('No text content found in PDF. The PDF might be image-based or corrupted.'));
+            return;
+          }
+          
+          resolve(fullText.trim());
+        } catch (error) {
+          console.error('PDF extraction error:', error);
+          reject(new Error('Failed to extract text from PDF. Please ensure the file is a valid PDF document.'));
+        }
       };
+      
       reader.onerror = () => reject(new Error('Failed to read PDF file'));
       reader.readAsArrayBuffer(file);
     });

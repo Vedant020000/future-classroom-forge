@@ -14,6 +14,7 @@ interface Profile {
   subject_specialization?: string;
   years_experience?: number;
   school_name?: string;
+  gemini_api_key?: string;
 }
 
 interface AuthContextType {
@@ -51,14 +52,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
-        setUser(session?.user ?? null);
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
         
-        if (session?.user) {
+        if (currentUser && !currentUser.id.startsWith('org_')) {
           // Fetch user profile
           setTimeout(async () => {
-            await fetchProfile(session.user.id);
+            await fetchProfile(currentUser.id);
           }, 0);
-        } else {
+        } else if (!currentUser) {
           setProfile(null);
         }
         setLoading(false);
@@ -68,9 +70,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser && !currentUser.id.startsWith('org_')) {
+        fetchProfile(currentUser.id);
       }
       setLoading(false);
     });
@@ -150,19 +153,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return { error: { message: 'Invalid username or password' } };
       }
 
-      // Create a session for organization user (simplified for demo)
-      // In production, you'd create a proper auth session
-      const mockProfile: Profile = {
-        id: `org_${credentials.id}`,
-        user_type: 'organization',
-        organization_id: credentials.organization_id,
-        teacher_name: credentials.teacher_name,
-        school_name: credentials.organizations.name
-      };
+      // Fetch the profile for the organization user
+      const { data: orgProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('organization_id', credentials.organization_id)
+        .eq('teacher_name', credentials.teacher_name)
+        .single();
 
-      setProfile(mockProfile);
+      if (profileError || !orgProfile) {
+        return { error: { message: 'Could not find a profile for this organization user.' } };
+      }
+      
+      setProfile(orgProfile as Profile);
       setUser({
-        id: `org_${credentials.id}`,
+        id: orgProfile.id,
         email: `${username}@${credentials.organizations.name.toLowerCase().replace(/\s+/g, '')}`,
         created_at: new Date().toISOString()
       } as User);

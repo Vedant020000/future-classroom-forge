@@ -15,6 +15,7 @@ import { VirtualClassroomPage } from "./pages/VirtualClassroomPage";
 import { StudentsPage } from "./pages/StudentsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { AuthPage } from "./pages/AuthPage";
+import { AdminDashboardPage } from "./pages/AdminDashboardPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="create-lesson-plan" element={<CreateLessonPlanPage />} />
               <Route path="students" element={<StudentsPage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="admin" element={<AdminDashboardPage />} />
             </Route>
             <Route path="/virtual-classroom" element={
               <ProtectedRoute>

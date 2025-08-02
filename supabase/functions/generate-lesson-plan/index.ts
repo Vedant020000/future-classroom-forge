@@ -1,8 +1,15 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.21.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { ChatGoogleGenerativeAI } from "https://esm.sh/@langchain/google-genai";
+import { SupabaseVectorStore } from 'https://esm.sh/@langchain/community/vectorstores/supabase';
+import { OpenAIEmbeddings } from 'https://esm.sh/@langchain/openai';
+import { StringOutputParser } from "https://esm.sh/@langchain/core/output_parsers";
+import { PromptTemplate } from "https://esm.sh/@langchain/core/prompts";
+import {
+  RunnableSequence,
+  RunnablePassthrough,
+} from "https://esm.sh/@langchain/core/runnables";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -22,90 +29,31 @@ serve(async (req) => {
       throw new Error('Google AI API key not configured');
     }
 
-    const genAI = new GoogleGenerativeAI(googleAIApiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    console.log('Searching PDF knowledge base for relevant educational content...');
-
-    // Create targeted search queries for different aspects of lesson planning
-    const searchQueries = [
-      `${lessonData.subject} ${lessonData.grade} teaching methods engagement activities`,
-      `${lessonData.subject} assessment strategies formative summative evaluation`,
-      `differentiation learning styles multiple intelligences ${lessonData.grade}`,
-      `${lessonData.subject} pedagogy best practices research evidence`,
-      `classroom management techniques ${lessonData.grade} behavior strategies`,
-      `${lessonData.title} ${lessonData.subject} lesson activities examples`
-    ];
-
-    let relevantKnowledge: any[] = [];
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY')!;
     
-    // Search PDF knowledge base for each query
-    for (const query of searchQueries) {
-      try {
-        const { data: searchResults, error } = await supabase.functions.invoke('search-pdf-knowledge', {
-          body: { 
-            query, 
-            subject: lessonData.subject, 
-            gradeLevel: lessonData.grade,
-            limit: 3
-          }
-        });
-        
-        if (error) {
-          console.error(`Search error for query "${query}":`, error);
-          continue;
-        }
-        
-        if (searchResults?.results) {
-          relevantKnowledge.push(...searchResults.results);
-        }
-      } catch (searchError) {
-        console.error(`Search error for query "${query}":`, searchError);
-      }
-    }
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const embeddings = new OpenAIEmbeddings({ openAIApiKey });
+    const model = new ChatGoogleGenerativeAI({ apiKey: googleAIApiKey, model: "gemini-1.5-flash" });
 
-    // Remove duplicates and get top results
-    const uniqueKnowledge = relevantKnowledge
-      .filter((item, index, arr) => arr.findIndex(i => i.id === item.id) === index)
-      .sort((a, b) => b.relevanceScore - a.relevanceScore)
-      .slice(0, 10);
+    const vectorStore = new SupabaseVectorStore(embeddings, {
+      client: supabase,
+      tableName: 'pdf_knowledge_chunks',
+      queryName: 'match_documents',
+    });
 
-    console.log(`Found ${uniqueKnowledge.length} relevant knowledge chunks from uploaded PDFs`);
+    const retriever = vectorStore.asRetriever(10, {
+      subject: lessonData.subject === 'all' ? undefined : lessonData.subject,
+      gradeLevel: lessonData.grade === 'all' ? undefined : lessonData.grade,
+    });
 
-    // Format PDF-based research content
-    const pdfResearchContent = uniqueKnowledge.length > 0 
-      ? uniqueKnowledge.map(knowledge => 
-          `**Source: ${knowledge.source}** (Relevance: ${knowledge.relevanceScore})\n${knowledge.content}`
-        ).join('\n\n---\n\n')
-      : '';
+    const template = `You are an expert educator creating a research-backed lesson plan. Use the educational research and best practices from the uploaded documents to create a comprehensive, evidence-based lesson plan.
 
-    // Create enhanced prompt with PDF research integration
-    const prompt = `You are an expert educator creating a research-backed lesson plan. Use the educational research and best practices from the uploaded documents to create a comprehensive, evidence-based lesson plan.
+Context:
+{context}
 
-LESSON REQUIREMENTS:
-- Title: ${lessonData.title}
-- Subject: ${lessonData.subject}
-- Grade Level: ${lessonData.grade}
-- Duration: ${lessonData.duration}
-- Learning Objectives: ${lessonData.objectives || 'To be developed based on content'}
-- Content Outline: ${lessonData.outline || 'To be structured based on best practices'}
-- Student Considerations: ${lessonData.studentNeeds || 'Address diverse learning needs'}
-
-TEACHER INPUT FROM AI QUESTIONS:
-${aiQuestions.map((q: any) => `Q: ${q.question}\nA: ${q.answer || 'Not answered'}`).join('\n\n')}
-
-RELEVANT EDUCATIONAL RESEARCH FROM UPLOADED DOCUMENTS:
-${pdfResearchContent || 'No specific PDF research found - using general educational best practices'}
-
-${pdfResearchContent ? 
-`INSTRUCTIONS: Create a detailed lesson plan that directly incorporates and references the research findings above. Cite specific strategies, methods, and evidence from the uploaded documents.` 
-: 
-`INSTRUCTIONS: Create a research-based lesson plan using established educational principles including active learning, formative assessment, differentiation, and Universal Design for Learning (UDL).`}
-
+Question:
 Create a comprehensive lesson plan with these sections:
 
 ## ${lessonData.title}
@@ -159,25 +107,30 @@ Create a comprehensive lesson plan with these sections:
 ### Research Integration
 - [Reference specific strategies from the uploaded research]
 
-Make this lesson plan practical, detailed, and immediately usable in the classroom. Include specific timing, clear instructions, and research citations where applicable.`;
+Make this lesson plan practical, detailed, and immediately usable in the classroom. Include specific timing, clear instructions, and research citations where applicable.
 
-    console.log('Generating research-enhanced lesson plan...');
+Teacher Input:
+${aiQuestions.map((q: any) => `Q: ${q.question}\nA: ${q.answer || 'Not answered'}`).join('\n\n')}
+`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const lessonPlan = response.text();
+    const prompt = PromptTemplate.fromTemplate(template);
 
-    console.log('Successfully generated PDF research-enhanced lesson plan');
+    const chain = RunnableSequence.from([
+      {
+        context: retriever.pipe((docs) => docs.map((d) => d.pageContent).join("\n\n")),
+        question: new RunnablePassthrough(),
+      },
+      prompt,
+      model,
+      new StringOutputParser(),
+    ]);
+
+    const lessonPlan = await chain.invoke(
+      `Create a lesson plan for a ${lessonData.grade} ${lessonData.subject} class on the topic of "${lessonData.title}".`
+    );
 
     return new Response(JSON.stringify({ 
       lessonPlan,
-      researchReferences: uniqueKnowledge.map(k => ({
-        source: k.source,
-        relevanceScore: k.relevanceScore,
-        topic: k.content.substring(0, 100) + '...'
-      })),
-      knowledgeChunksUsed: uniqueKnowledge.length,
-      hasPDFResearch: uniqueKnowledge.length > 0
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

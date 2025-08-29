@@ -28,11 +28,6 @@ const navigation = [
     icon: PlusCircle,
   },
   {
-    name: "Virtual Classroom",
-    href: "/virtual-classroom",
-    icon: Monitor,
-  },
-  {
     name: "Students",
     href: "/students",
     icon: Users,
@@ -54,8 +49,7 @@ export const Sidebar = () => {
         <div className="flex items-center gap-2 p-6 border-b border-sidebar-border">
           <GraduationCap className="h-8 w-8 text-primary" />
           <div>
-            <h1 className="text-lg font-bold text-sidebar-foreground">TheFuture</h1>
-            <p className="text-sm text-muted-foreground">Classroom</p>
+            <h1 className="text-lg font-bold text-sidebar-foreground">TheFutureClassroom</h1>
           </div>
         </div>
 

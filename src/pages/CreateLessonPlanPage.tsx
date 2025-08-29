@@ -66,7 +66,7 @@ export const CreateLessonPlanPage = () => {
   const steps = [
     { number: 1, title: "Lesson Information", icon: BookOpen },
     { number: 2, title: "AI Questions", icon: HelpCircle },
-    { number: 3, title: "RAG-Enhanced Generation", icon: Brain },
+    { number: 3, title: "Generation", icon: Brain },
     { number: 4, title: "Review & Save", icon: CheckCircle },
   ];
 
@@ -252,7 +252,7 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
         title: formData.title,
         subject: formData.subject,
         grade_level: formData.grade,
-        description: formData.objectives || "RAG-enhanced AI-generated lesson plan",
+        description: formData.objectives || "AI-generated lesson plan",
         duration: parseInt(formData.duration.replace(' min', '')) || undefined,
       });
 
@@ -336,7 +336,7 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
             </p>
             <div className="flex items-center gap-2 mt-2">
               <Brain className="h-4 w-4 text-purple-500" />
-              <span className="text-sm text-purple-600 font-medium">Enhanced with PDF-based Research (RAG)</span>
+              <span className="text-sm text-purple-600 font-medium"></span>
             </div>
           </div>
           <Button 
@@ -574,7 +574,7 @@ Generated with AI assistance based on your inputs and teaching preferences.`;
                       </Badge>
                       <Badge variant="secondary" className="bg-white/80">
                         <Brain className="h-3 w-3 mr-1" />
-                        RAG-Enhanced with Research
+                        Ai Generation
                       </Badge>
                     </div>
                   </div>

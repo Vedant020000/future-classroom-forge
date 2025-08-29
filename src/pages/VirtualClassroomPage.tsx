@@ -1,20 +1,19 @@
-
 import { useState, useEffect } from "react";
 import { VirtualClassroomLayout } from "@/components/layout/VirtualClassroomLayout";
 import { LoadingScreen } from "@/components/LoadingScreen";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Video, 
-  Mic, 
-  MicOff, 
-  VideoOff, 
-  Monitor, 
-  Users, 
+import {
+  Video,
+  Mic,
+  MicOff,
+  VideoOff,
+  Monitor,
+  Users,
   MessageSquare,
   Settings,
   Hand,
-  MoreVertical
+  MoreVertical,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
